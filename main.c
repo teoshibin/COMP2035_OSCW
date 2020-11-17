@@ -11,6 +11,7 @@ typedef enum
     burstTime = 2,
     waitingTime = 3,
     turnaroundTime = 4,
+    arrivalTime = 5,
     NUM_PROCESSDATATYPE
 } processDataType;
 
@@ -55,9 +56,19 @@ int main()
 }
 
 void rr(int numberOfProcess, int processData[NUM_PROCESSDATATYPE][numberOfProcess],
-         int *averageWaitingTime, int *averageTurnaroundTime){
-             
-         }
+        int timeQuantum, int *averageWaitingTime, int *averageTurnaroundTime){
+
+    typedef enum{
+        -NA- = 0,
+        WAIT = 1,
+        WORK = 2,
+        OVHD = 3,
+    }status;
+
+    int quantumStatus[numberOfProcess];
+
+    for 
+}
 
 // shortest job first
 void sjf(int numberOfProcess, int processData[NUM_PROCESSDATATYPE][numberOfProcess],
