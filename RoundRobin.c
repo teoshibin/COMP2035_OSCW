@@ -53,9 +53,30 @@ int main()
             if(temp[processIndex] == 0 && displayBoolean == 1)
             {
                   numberOfProcess--;
-                  printf("\nProcess[%d]\t\t%d\t\t %d\t\t\t %d", processIndex + 1, burst_time[processIndex], endingTime - arrival_time[processIndex], endingTime - arrival_time[processIndex] - burst_time[processIndex]);
-                  totalWaitingTime = totalWaitingTime + endingTime - arrival_time[processIndex] - burst_time[processIndex];
-                  totalTurnaroundTime = totalTurnaroundTime + endingTime - arrival_time[processIndex];
+                  int turnaroundTime;
+                  int waitingTime;
+
+                  if (endingTime == burst_time[processIndex])
+                  {
+                        turnaroundTime = endingTime;
+                        waitingTime = 0;
+                        totalWaitingTime = waitingTime;
+                        totalTurnaroundTime = turnaroundTime;
+                  } else
+                  {
+                        turnaroundTime = endingTime - arrival_time[processIndex];
+                        waitingTime = turnaroundTime - burst_time[processIndex];
+                        totalWaitingTime = totalWaitingTime + endingTime - arrival_time[processIndex] - burst_time[processIndex];
+                        totalTurnaroundTime = totalTurnaroundTime + endingTime - arrival_time[processIndex];
+                  }
+
+                  printf("\nProcess[%d]\t\t%d\t\t %d\t\t\t %d", processIndex + 1, burst_time[processIndex], turnaroundTime, waitingTime);
+                  
+                //   int turnaroundTime = endingTime == burst_time[processIndex] ? endingTime : endingTime - arrival_time[processIndex];
+                //   int waitingTime = endingTime == burst_time[processIndex] ? 0 : turnaroundTime - burst_time[processIndex];
+                //   printf("\nProcess[%d]\t\t%d\t\t %d\t\t\t %d", processIndex + 1, burst_time[processIndex], turnaroundTime, waitingTime);
+                //   totalWaitingTime = endingTime == burst_time[processIndex] ? waitingTime : totalWaitingTime + endingTime - arrival_time[processIndex] - burst_time[processIndex];
+                //   totalTurnaroundTime = totalTurnaroundTime + endingTime - arrival_time[processIndex];
                   displayBoolean = 0;
             }
 
