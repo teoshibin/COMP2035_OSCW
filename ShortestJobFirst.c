@@ -3,7 +3,7 @@
 //from Edureka!
  int main()
 {
-    int burstTime[20],process[20],waitingTime[20],turnaroundTime[20],i,j,numberOfProcess,totalWaitingTime=0,position,temp;
+    int burstTime[20],process[20],waitingTime[20],turnaroundTime[20],i,j,numberOfProcess,totalWaitingTime=0,smallestValueIndex,temp;
     float averageWaitingTime,averageTurnaroundTime;
     printf("Enter number of process:");
     scanf("%d",&numberOfProcess);
@@ -19,23 +19,29 @@
     //sorting of burst times
     for(i=0;i<numberOfProcess;i++)
     {
-        position=i;
+        smallestValueIndex=i;
 
         //comparing
         for(j=i+1; j<numberOfProcess; j++)
         {
-            if(burstTime[j] < burstTime[position])
-                position=j;
+            if(burstTime[j] < burstTime[smallestValueIndex])
+                smallestValueIndex=j;
+        }
+
+        if(i!=smallestValueIndex){
+            int temp = burstTime[i];
+            burstTime[i] = burstTime[smallestValueIndex];
+            burstTime[smallestValueIndex] = temp;
         }
   
         //swapping
         temp=burstTime[i];
-        burstTime[i]=burstTime[position];
-        burstTime[position]=temp;
+        burstTime[i]=burstTime[smallestValueIndex];
+        burstTime[smallestValueIndex]=temp;
   
         temp=process[i];
-        process[i]=process[position];
-        process[position]=temp;
+        process[i]=process[smallestValueIndex];
+        process[smallestValueIndex]=temp;
     }
    
     waitingTime[0]=0;            
