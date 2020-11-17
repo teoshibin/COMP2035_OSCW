@@ -3,62 +3,65 @@
 //from Edureka!
  int main()
 {
-    int bt[20],p[20],wt[20],tat[20],i,j,n,total=0,pos,temp;
-    float avg_wt,avg_tat;
+    int burstTime[20],process[20],waitingTime[20],turnaroundTime[20],i,j,numberOfProcess,totalWaitingTime=0,position,temp;
+    float averageWaitingTime,averageTurnaroundTime;
     printf("Enter number of process:");
-    scanf("%d",&n);
+    scanf("%d",&numberOfProcess);
   
-    printf("nEnter Burst Time:n");
-    for(i=0;i<n;i++)
+    printf("\nEnter Burst Time:\n");
+    for(i=0;i<numberOfProcess;i++)
     {
-        printf("p%d:",i+1);
-        scanf("%d",&bt[i]);
-        p[i]=i+1;         
+        printf("process%d:",i+1);
+        scanf("%d",&burstTime[i]);
+        process[i]=i+1;         
     }
   
-   //sorting of burst times
-    for(i=0;i<n;i++)
+    //sorting of burst times
+    for(i=0;i<numberOfProcess;i++)
     {
-        pos=i;
-        for(j=i+1;j<n;j++)
+        position=i;
+
+        //comparing
+        for(j=i+1; j<numberOfProcess; j++)
         {
-            if(bt[j]<bt[pos])
-                pos=j;
+            if(burstTime[j] < burstTime[position])
+                position=j;
         }
   
-        temp=bt[i];
-        bt[i]=bt[pos];
-        bt[pos]=temp;
+        //swapping
+        temp=burstTime[i];
+        burstTime[i]=burstTime[position];
+        burstTime[position]=temp;
   
-        temp=p[i];
-        p[i]=p[pos];
-        p[pos]=temp;
+        temp=process[i];
+        process[i]=process[position];
+        process[position]=temp;
     }
    
-    wt[0]=0;            
+    waitingTime[0]=0;            
   
    
-    for(i=1;i<n;i++)
+    for(i=1;i<numberOfProcess;i++)
     {
-        wt[i]=0;
+        waitingTime[i]=0;
         for(j=0;j<i;j++)
-            wt[i]+=bt[j];
+            waitingTime[i]+=burstTime[j];
   
-        total+=wt[i];
+        totalWaitingTime+=waitingTime[i];
     }
   
-    avg_wt=(float)total/n;      
-    total=0;
+    averageWaitingTime=(float)totalWaitingTime/numberOfProcess;      
+    totalWaitingTime=0;
   
-    printf("nProcesst    Burst Time    tWaiting TimetTurnaround Time");
-    for(i=0;i<n;i++)
+    printf("\nProcess\t    Burst Time    \tWaiting Time\tTurnaround Time");
+    for(i=0;i<numberOfProcess;i++)
     {
-        tat[i]=bt[i]+wt[i];   
-        total+=tat[i];
-        printf("np%dtt  %dtt    %dttt%d",p[i],bt[i],wt[i],tat[i]);
+        turnaroundTime[i]=burstTime[i]+waitingTime[i];   
+        totalWaitingTime+=turnaroundTime[i];
+        printf("\n[P%d]\t\t  %d\t\t    %d\t\t\t%d",process[i],burstTime[i],waitingTime[i],turnaroundTime[i]);
     }
   
-    avg_tat=(float)total/n;    
-    printf("nnAverage Waiting Time=%f",avg_wt);
-    printf("nAverage Turnaround Time=%fn",avg_tat);
+    averageTurnaroundTime=(float)totalWaitingTime/numberOfProcess;    
+    printf("\n\nAverage Waiting Time=%f",averageWaitingTime);
+    printf("\nAverage Turnaround Time=%f\n",averageTurnaroundTime);
 }
