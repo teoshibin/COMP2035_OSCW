@@ -2,6 +2,7 @@
 #include <stdio.h> 
 #include <unistd.h>
 
+// this is unix os orriented code not be able to compiled in windows
 int main() 
 {
     pid_t pid = fork();
