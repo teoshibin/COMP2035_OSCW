@@ -1,9 +1,17 @@
+// OS process algorithm simulator
+
+//Reference
+//1. edureka!
+
 // include
 #include <stdio.h>
 
-//types
+
+//macro
 #define CPU_CAPABILITY 50
 
+
+// data structure
 typedef enum
 {
     processID = 0,
@@ -15,18 +23,20 @@ typedef enum
     NUM_PROCESSDATATYPE
 } processDataType;
 
+
 // function prototype
 void rr(int numberOfProcess, int processData[NUM_PROCESSDATATYPE][numberOfProcess],
-        int timeQuantum, int overHead, int *averageWaitingTime, int *averageTurnaroundTime);
+        int timeQuantum, int overHead, double *averageWaitingTime, double *averageTurnaroundTime);
 
 void fcfs(int numberOfProcess, int processData[NUM_PROCESSDATATYPE][numberOfProcess],
-          int *averageWaitingTime, int *averageTurnAroundTime);
+          double *averageWaitingTime, double *averageTurnaroundTime);
           
 void sjf(int numberOfProcess, int processData[NUM_PROCESSDATATYPE][numberOfProcess],
-         int *averageWaitingTime, int *averageTurnAroundTime);
+         double *averageWaitingTime, double *averageTurnaroundTime);
 
 void display(int numberOfProcess, int processData[NUM_PROCESSDATATYPE][numberOfProcess],
-             int averageWaitingTime, int averageTurnAroundTime);
+             double averageWaitingTime, double averageTurnaroundTime);
+
 
 // main function
 int main()
@@ -35,8 +45,8 @@ int main()
     int timeQuantum;
     int overHead;
     int numberOfProcess, j;
-    int averageWaitingTime = 0;
-    int averageTurnaroundTime = 0;
+    double averageWaitingTime = 0;
+    double averageTurnaroundTime = 0;
 
     // input
     printf("\nEnter total number of processes:");
@@ -64,9 +74,9 @@ int main()
 
 
     // fcfs algorithms
-    // fcfs(numberOfProcess, processData, &averageWaitingTime, &averageTurnaroundTime);
+    fcfs(numberOfProcess, processData, &averageWaitingTime, &averageTurnaroundTime);
     // sjf(numberOfProcess, processData, &averageWaitingTime, &averageTurnaroundTime);
-    rr(numberOfProcess, processData, timeQuantum, overHead, &averageWaitingTime, &averageTurnaroundTime);
+    // rr(numberOfProcess, processData, timeQuantum, overHead, &averageWaitingTime, &averageTurnaroundTime);
 
     // display function
     display(numberOfProcess, processData, averageWaitingTime, averageTurnaroundTime);
@@ -74,7 +84,10 @@ int main()
     return 0;
 }
 
-void rr(int numberOfProcess, int processData[NUM_PROCESSDATATYPE][numberOfProcess], int timeQuantum, int overHead, int* averageWaitingTime, int* averageTurnaroundTime){
+
+// functions
+// round robin
+void rr(int numberOfProcess, int processData[NUM_PROCESSDATATYPE][numberOfProcess], int timeQuantum, int overHead, double* averageWaitingTime, double* averageTurnaroundTime){
 
     //-----------------------------------------private method--------------------------------------------
     void removeArrayElement(int array[], int index, int* end){
@@ -239,7 +252,7 @@ void rr(int numberOfProcess, int processData[NUM_PROCESSDATATYPE][numberOfProces
 
 // shortest job first
 void sjf(int numberOfProcess, int processData[NUM_PROCESSDATATYPE][numberOfProcess],
-         int *averageWaitingTime, int *averageTurnaroundTime)
+         double *averageWaitingTime, double *averageTurnaroundTime)
 {
 
     int smallestValueIndex;
@@ -277,7 +290,7 @@ void sjf(int numberOfProcess, int processData[NUM_PROCESSDATATYPE][numberOfProce
 
 // first come first serve
 void fcfs(int numberOfProcess, int processData[NUM_PROCESSDATATYPE][numberOfProcess],
-          int *averageWaitingTime, int *averageTurnAroundTime)
+          double *averageWaitingTime, double *averageTurnaroundTime)
 {
 
     processData[waitingTime][0] = 0;
@@ -294,16 +307,16 @@ void fcfs(int numberOfProcess, int processData[NUM_PROCESSDATATYPE][numberOfProc
         processData[startTime][i] = i == 0 ? 0 : processData[turnaroundTime][i - 1];
         processData[turnaroundTime][i] = processData[burstTime][i] + processData[waitingTime][i];
         *averageWaitingTime += processData[waitingTime][i];
-        *averageTurnAroundTime += processData[turnaroundTime][i];
+        *averageTurnaroundTime += processData[turnaroundTime][i];
     }
 
     *averageWaitingTime /= numberOfProcess;
-    *averageTurnAroundTime /= numberOfProcess;
+    *averageTurnaroundTime /= numberOfProcess;
 }
 
 // main display function
 void display(int numberOfProcess, int processData[NUM_PROCESSDATATYPE][numberOfProcess],
-             int averageWaitingTime, int averageTurnaroundTime)
+             double averageWaitingTime, double averageTurnaroundTime)
 {
 
     printf("\nProcess\t\tStart Time\tBurst Time\tWaiting Time\tTurnaround Time");
@@ -313,12 +326,7 @@ void display(int numberOfProcess, int processData[NUM_PROCESSDATATYPE][numberOfP
         printf("\nP[%d]\t\t%d\t\t%d\t\t%d\t\t%d", processData[processID][k], processData[startTime][k], processData[burstTime][k], processData[waitingTime][k], processData[turnaroundTime][k]);
     }
 
-    printf("\n\nAverage Waiting Time: %d \n", averageWaitingTime);
-    printf("Average Turnaround Time: %d \n\n", averageTurnaroundTime);
+    printf("\n\nAverage Waiting Time: %.2f \n", averageWaitingTime);
+    printf("Average Turnaround Time: %.2f \n\n", averageTurnaroundTime);
     printf("CPU Usage: %.2f%% \n\n", ((double)numberOfProcess / CPU_CAPABILITY) * 100);
 }
-
-
-
-//Reference
-//1. edureka!
