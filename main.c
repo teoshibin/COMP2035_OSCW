@@ -59,7 +59,7 @@ void rr(int numberOfProcess, int processData[NUM_PROCESSDATATYPE][numberOfProces
         int timeQuantum, int *averageWaitingTime, int *averageTurnaroundTime){
 
     typedef enum{
-        -NA- = 0,
+        NA = 0,
         WAIT = 1,
         WORK = 2,
         OVHD = 3,
