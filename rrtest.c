@@ -26,7 +26,12 @@ int main()
 
     int arrivalTime[numberOfProcess];
     int burstTime[numberOfProcess];
+    int totalWaitingTime = 0;
+    int totalTurnaroundTime = 0;
+    int waitingTime[numberOfProcess];
+    int turnaroundTime[numberOfProcess];
 
+    
     //inner loop variable
     int currentTimeFrame = 0; // current time
     int previousTimeFrame = -timeQuantum; // previous current time
@@ -37,13 +42,9 @@ int main()
     int arrivedProcessesCounter = 0;// index of (int arrivedProcessesIndex[numberOfProcess];) variable
     int arrivedProcessesIndex[numberOfProcess];// add or remove the index of process to list if arrive or done
     int reducingBurstTime[numberOfProcess];// gradually reduce burst time to 0 and set it as done
-    int totalWaitingTime = 0;
-    int totalTurnaroundTime = 0;
     int doneProcessBoolean = 0;
 
     //output
-    int waitingTime[numberOfProcess];
-    int turnaroundTime[numberOfProcess];
     double averageWaitTime = 0;
     double averageTurnaroundTime = 0;
 
@@ -120,14 +121,6 @@ int main()
             // when rrindex equal to coutner, mod(rrindex, counter) will turn rrindex back to 0
             rrIndex++;
             rrIndex %= arrivedProcessesCounter;// circular round robin 0,1,2,0,1,2
-
-            // if (rrIndex < arrivedProcessesCounter)
-            // {
-            //     rrIndex = 0;
-            // } else if (workingProcessIndex != arrivedProcessesIndex[rrIndex])
-            // {
-            //     rrIndex;
-            // }
             workingProcessIndex = arrivedProcessesIndex[rrIndex];
             currentTimeFrame += overHead;
         }
@@ -204,18 +197,17 @@ int main()
 
     printf("\n\nAverage Waiting Time:\t%.2f", averageWaitTime);
     printf("\nAverage Turnaround Time:\t%.2f\n", averageTurnaroundTime);
-    
-    return 0;
-}
 
-void removeArrayElement(int array[], int index, int* end){
-    for (int i = index; i < *end - 1; i++)
-    {
-        if ((i + 1) != *end)
+    void removeArrayElement(int array[], int index, int* end){
+        for (int i = index; i < *end - 1; i++)
         {
-            array[i] = array[i + 1];
+            if ((i + 1) != *end)
+            {
+                array[i] = array[i + 1];
+            }
         }
+        array[*end - 1] = 0;
+        *end -= 1;
     }
-    array[*end - 1] = 0;
-    *end -= 1;
+    
 }
