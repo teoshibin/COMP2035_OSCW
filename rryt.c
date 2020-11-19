@@ -14,7 +14,6 @@
 
 //macro
 #define CPU_CAPABILITY 50
-#define EMPTY -1
 
 // data structure
 typedef enum
@@ -28,27 +27,11 @@ typedef enum
     NUM_PROCESSDATATYPE
 } processDataType;
 
-
-/* -------------------------------------------------------------------------- */
-/*                             function prototype                             */
-/* -------------------------------------------------------------------------- */
-
+// function prototype
 void rr(int numberOfProcess, int processData[NUM_PROCESSDATATYPE][numberOfProcess],
         int timeQuantum, int overHead, double *averageWaitingTime, double *averageTurnaroundTime);
 
-void fcfs(int numberOfProcess, int processData[NUM_PROCESSDATATYPE][numberOfProcess],
-          double *averageWaitingTime, double *averageTurnaroundTime);
-
-void sjf(int numberOfProcess, int processData[NUM_PROCESSDATATYPE][numberOfProcess],
-         double *averageWaitingTime, double *averageTurnaroundTime);
-
-void display(int numberOfProcess, int processData[NUM_PROCESSDATATYPE][numberOfProcess],
-             double averageWaitingTime, double averageTurnaroundTime);
-
-/* -------------------------------------------------------------------------- */
-/*                                main function                               */
-/* -------------------------------------------------------------------------- */
-
+// main function
 int main()
 {
     // input variable
@@ -82,17 +65,10 @@ int main()
 
     printf("\nProcess ID\t\tBurst Time\t Turnaround Time\t Waiting Time\n");
 
-    // fcfs algorithms
-    // fcfs(numberOfProcess, processData, &averageWaitingTime, &averageTurnaroundTime);
-    // sjf(numberOfProcess, processData, &averageWaitingTime, &averageTurnaroundTime);
     rr(numberOfProcess, processData, timeQuantum, overHead, &averageWaitingTime, &averageTurnaroundTime);
-
-    // display function
-    // display(numberOfProcess, processData, averageWaitingTime, averageTurnaroundTime);
 
     return 0;
 }
-
 
 /* -------------------------------------------------------------------------- */
 /*                                  functions                                 */
@@ -101,37 +77,32 @@ int main()
 // round robin
 void rr(int numberOfProcess, int processData[NUM_PROCESSDATATYPE][numberOfProcess], int timeQuantum, int overHead, double *averageWaitingTime, double *averageTurnaroundTime)
 {
-    // TODO remove this
-    // void removeArrayElement(int array[], int index, int *end);
-    
-    void selectiveSortProcess(int numberOfProcess, int processData[NUM_PROCESSDATATYPE][numberOfProcess], processDataType type);
-    int deque(int size, int array[size], int *front, int *fill, int rear);
-    void enque(int size, int array[size], int front, int *rear, int *fill, int value);
 
-    //--------------------------private variables initialization--------------------------
+    /* ---------------------------- declare prototype ---------------------------- */
+
+    void selectiveSortProcess(int numberOfProcess, int processData[NUM_PROCESSDATATYPE][numberOfProcess], processDataType type);
+    void removeArrayElement(int array[], int index, int *end);
+
+    /* -------------------------------- variable -------------------------------- */
+
     int currentTimeFrame = 0;             // current time
     int previousTimeFrame = -timeQuantum; // previous current time
     int remainingProcesses = numberOfProcess;
     int rrIndex = 0;                            // round robin value
     int workingProcessIndex = -1;               // current working process index
     int arrivedProcessesCounter = 0;            // index of (int arrivedProcessesIndex[numberOfProcess];) variable
-
-    // TODO remove this variable
-    // int arrivedProcessesIndex[numberOfProcess]; // add or remove the index of process to list if arrive or done
-
-
+    int arrivedProcessesIndex[numberOfProcess]; // add or remove the index of process to list if arrive or done
     int reducingBurstTime[numberOfProcess];     // gradually reduce burst time to 0 and set it as done
     int doneProcessBoolean = 0;
     int totalTurnaroundTime = 0;
     int totalWaitingTime = 0;
 
-    // queue realated variable
+    // new variable fix
     int readyQueue[numberOfProcess];
-    int fill = 0; // queue length
-    int front = 0; // queue head
-    int rear = 0; // queue tail
+    int front = 0;
+    int rear = 0;
 
-    //--------------------------------------------RR Algorithms-------------------------------------------
+    /* ---------------------------------- init ---------------------------------- */
 
     // copy burst time to temp array
     for (int i = 0; i < numberOfProcess; i++)
@@ -146,24 +117,24 @@ void rr(int numberOfProcess, int processData[NUM_PROCESSDATATYPE][numberOfProces
         processData[waitingTime][i] = 0;
     }
 
+    // sort arrival time for priority (sort process data by sorting arrival time)
+    selectiveSortProcess(numberOfProcess, processData, arrivalTime);
+
+    /* ----------------------------------- rr ----------------------------------- */
+
     // while there is still remaining job then continue looping
     while (remainingProcesses)
     {
         /// check for arrival and update arrival list
         for (int i = 0; i < numberOfProcess; i++)
         {
-            if (processData[arrivalTime][i] <= currentTimeFrame && reducingBurstTime[i] != 0)
-            {
-                
-            }
-
             // if arrival comes after previous time and before or equql to current time then register new arrival
-            // if (processData[arrivalTime][i] > previousTimeFrame && processData[arrivalTime][i] <= currentTimeFrame)
-            // {
-            //     //store process index of the arrived job
-            //     arrivedProcessesIndex[arrivedProcessesCounter] = i;
-            //     arrivedProcessesCounter++;
-            // }
+            if (processData[arrivalTime][i] > previousTimeFrame && processData[arrivalTime][i] <= currentTimeFrame)
+            {
+                //store process index of the arrived job
+                arrivedProcessesIndex[arrivedProcessesCounter] = i;
+                arrivedProcessesCounter++;
+            }
         }
 
         previousTimeFrame = currentTimeFrame;
@@ -270,128 +241,6 @@ void rr(int numberOfProcess, int processData[NUM_PROCESSDATATYPE][numberOfProces
     printf("\nAverage Turnaround Time:\t%.2f\n", *averageTurnaroundTime);
 }
 
-// shortest job first
-void sjf(int numberOfProcess, int processData[NUM_PROCESSDATATYPE][numberOfProcess],
-         double *averageWaitingTime, double *averageTurnaroundTime)
-{
-
-    int smallestValueIndex;
-    int temp;
-    int j;
-
-    // selection sort
-    for (int i = 0; i < numberOfProcess; i++)
-    {
-        smallestValueIndex = i;
-
-        // compare i to j
-        for (int j = i + 1; j < numberOfProcess; j++)
-        {
-            if (processData[burstTime][j] < processData[burstTime][i])
-                smallestValueIndex = j;
-        }
-
-        // swap if current burst time is not the smallest burst time
-        if (smallestValueIndex != i)
-        {
-            temp = processData[burstTime][i];
-            processData[burstTime][i] = processData[burstTime][smallestValueIndex];
-            processData[burstTime][smallestValueIndex] = temp;
-
-            temp = processData[processID][i];
-            processData[processID][i] = processData[processID][smallestValueIndex];
-            processData[processID][smallestValueIndex] = temp;
-        }
-    }
-
-    fcfs(numberOfProcess, processData, averageWaitingTime, averageTurnaroundTime);
-}
-
-// first come first serve
-void fcfs(int numberOfProcess, int processData[NUM_PROCESSDATATYPE][numberOfProcess],
-          double *averageWaitingTime, double *averageTurnaroundTime)
-{
-
-    processData[waitingTime][0] = 0;
-
-    for (int i = 1; i < numberOfProcess; i++)
-    {
-        processData[waitingTime][i] = 0;
-        for (int j = 0; j < i; j++)
-            processData[waitingTime][i] += processData[burstTime][j];
-    }
-
-    for (int i = 0; i < numberOfProcess; i++)
-    {
-        processData[startTime][i] = i == 0 ? 0 : processData[turnaroundTime][i - 1];
-        processData[turnaroundTime][i] = processData[burstTime][i] + processData[waitingTime][i];
-        *averageWaitingTime += processData[waitingTime][i];
-        *averageTurnaroundTime += processData[turnaroundTime][i];
-    }
-
-    *averageWaitingTime /= numberOfProcess;
-    *averageTurnaroundTime /= numberOfProcess;
-}
-
-// main display function
-void display(int numberOfProcess, int processData[NUM_PROCESSDATATYPE][numberOfProcess],
-             double averageWaitingTime, double averageTurnaroundTime)
-{
-
-    printf("\nProcess\t\tStart Time\tBurst Time\tWaiting Time\tTurnaround Time");
-
-    for (int k = 0; k < numberOfProcess; k++)
-    {
-        printf("\nP[%d]\t\t%d\t\t%d\t\t%d\t\t%d", processData[processID][k], processData[startTime][k], processData[burstTime][k], processData[waitingTime][k], processData[turnaroundTime][k]);
-    }
-
-    printf("\n\nAverage Waiting Time: %.2f \n", averageWaitingTime);
-    printf("Average Turnaround Time: %.2f \n\n", averageTurnaroundTime);
-    printf("CPU Usage: %.2f%% \n\n", ((double)numberOfProcess / CPU_CAPABILITY) * 100);
-}
-
-/* -------------------------------------------------------------------------- */
-/*                               helper function                              */
-/* -------------------------------------------------------------------------- */
-
-void removeArrayElement(int array[], int index, int *end)
-{
-    for (int i = index; i < *end - 1; i++)
-    {
-        if ((i + 1) != *end)
-        {
-            array[i] = array[i + 1];
-        }
-    }
-    array[*end - 1] = 0;
-    *end -= 1;
-}
-
-void enque(int size, int array[size], int front, int *rear, int *fill, int value)
-{
-    if (*fill < size)
-    {
-        array[*rear] = value;
-        *rear += 1;
-        *rear %= size;
-        *fill += 1;
-    }
-}
-
-int deque(int size, int array[size], int *front, int *fill, int rear)
-{
-    int value = EMPTY;
-    if (*fill)
-    {
-        value = array[*front];
-        array[*front] = -1;
-        *front += 1;
-        *front %= size;
-        *fill -= 1;
-    }
-    return value;
-}
-
 void selectiveSortProcess(int numberOfProcess, int processData[NUM_PROCESSDATATYPE][numberOfProcess], processDataType type)
 {
 
@@ -439,4 +288,17 @@ void swapProcessData(int numberOfProcess, int processData[NUM_PROCESSDATATYPE][n
         processData[type][index1] = temp;
         break;
     }
+}
+
+void removeArrayElement(int array[], int index, int *end)
+{
+    for (int i = index; i < *end - 1; i++)
+    {
+        if ((i + 1) != *end)
+        {
+            array[i] = array[i + 1];
+        }
+    }
+    array[*end - 1] = 0;
+    *end -= 1;
 }
