@@ -6,17 +6,22 @@
 88     88  Yb  YbodP   YboodP 888888 8bodP' 8bodP'     8bodP'  YboodP 88  88 888888 8888Y"  `YbodP' 88ood8 88 88  Y8  YboodP
 */
 
-//Reference
-//1. edureka!
+/* ------------------------------- References ------------------------------- */
 
-// include
+//1. edureka!
+//2. round robin using ready queue https://www.youtube.com/watch?v=-jFGYDfWkXI
+
+/* ----------------------------------- lib ---------------------------------- */
+
 #include <stdio.h>
 
-//macro
+/* ---------------------------------- macro --------------------------------- */
+
 #define CPU_CAPABILITY 50
 #define EMPTY -1
 
-// data structure
+/* ----------------------------- data structure ----------------------------- */
+
 typedef enum
 {
     processID = 0,
@@ -28,9 +33,7 @@ typedef enum
     NUM_PROCESSDATATYPE
 } processDataType;
 
-/* -------------------------------------------------------------------------- */
-/*                             function prototype                             */
-/* -------------------------------------------------------------------------- */
+/* -------------------------------- prototype ------------------------------- */
 
 void rr(int numberOfProcess, int processData[NUM_PROCESSDATATYPE][numberOfProcess],
         int timeQuantum, int overHead, double *averageWaitingTime, double *averageTurnaroundTime);
@@ -112,19 +115,15 @@ void rr(int numberOfProcess, int processData[NUM_PROCESSDATATYPE][numberOfProces
 
     /* -------------------------------- variable -------------------------------- */
 
+    //loop related
     int currentTimeFrame = 0;             // current time
     int previousTimeFrame = -timeQuantum; // previous current time
     int remainingProcesses = numberOfProcess;
-    int rrIndex = 0;                 // round robin value
     int workingProcessIndex = -1;    // current working process index
     int arrivedProcessesCounter = 0; // index of (int arrivedProcessesIndex[numberOfProcess];) variable
-
     int arrivedProcessesIndex[numberOfProcess]; // add or remove the index of process to list if arrive or done
-
     int reducingBurstTime[numberOfProcess]; // gradually reduce burst time to 0 and set it as done
     int doneProcessBoolean = 0;
-    int totalTurnaroundTime = 0;
-    int totalWaitingTime = 0;
 
     // queue realated variable
     int readyQueue[numberOfProcess];
@@ -132,18 +131,12 @@ void rr(int numberOfProcess, int processData[NUM_PROCESSDATATYPE][numberOfProces
     int front = 0; // queue head
     int rear = 0;  // queue tail
 
+    //output related
+    int totalTurnaroundTime = 0;
+    int totalWaitingTime = 0;
+
     /* ------------------------------- initialize ------------------------------- */
     
-    // printf("\n\n\nid\tstart\tburst\tturnaround\twait\tarrival\n");
-    // for (int i = 0; i < numberOfProcess; i++)
-    // {
-    //     for (int j = 0; j < NUM_PROCESSDATATYPE; j++)
-    //     {
-    //         printf("%d\t", processData[j][i]);
-    //     }
-    //     printf("\n");
-    // }
-
     // sort by arrival time
     selectiveSortProcess(numberOfProcess, processData, arrivalTime);
 
@@ -168,6 +161,7 @@ void rr(int numberOfProcess, int processData[NUM_PROCESSDATATYPE][numberOfProces
                 arrivedProcessesIndex[arrivedProcessesCounter++] = i;
                 enque(numberOfProcess, readyQueue, front, &rear, &fill, i);
 
+                // add initial time difference between current and arrival time
                 processData[turnaroundTime][i] += currentTimeFrame - processData[arrivalTime][i];
                 processData[waitingTime][i] += currentTimeFrame - processData[arrivalTime][i];
             }
@@ -183,8 +177,6 @@ void rr(int numberOfProcess, int processData[NUM_PROCESSDATATYPE][numberOfProces
         }
 
         previousTimeFrame = currentTimeFrame;
-
-        /* --------------------------------- New Process Algo ----------------------------------------------*/
 
         // if no process in ready queue
         if (fill == 0)
@@ -241,6 +233,10 @@ void rr(int numberOfProcess, int processData[NUM_PROCESSDATATYPE][numberOfProces
         }
     }
 
+    /* ---------------------------- calculate output ---------------------------- */
+
+    selectiveSortProcess(numberOfProcess, processData, processID);
+
     for (int i = 0; i < numberOfProcess; i++)
     {
         totalTurnaroundTime += processData[turnaroundTime][i];
@@ -252,9 +248,13 @@ void rr(int numberOfProcess, int processData[NUM_PROCESSDATATYPE][numberOfProces
 
     printf("\n\nAverage Waiting Time:\t%.2f", *averageWaitingTime);
     printf("\nAverage Turnaround Time:\t%.2f\n", *averageTurnaroundTime);
+
 }
 
-// shortest job first
+
+
+/* --------------------------- shortest job first --------------------------- */
+
 void sjf(int numberOfProcess, int processData[NUM_PROCESSDATATYPE][numberOfProcess],
          double *averageWaitingTime, double *averageTurnaroundTime)
 {
@@ -291,7 +291,10 @@ void sjf(int numberOfProcess, int processData[NUM_PROCESSDATATYPE][numberOfProce
     fcfs(numberOfProcess, processData, averageWaitingTime, averageTurnaroundTime);
 }
 
-// first come first serve
+
+
+/* ------------------------- first come first serve ------------------------- */
+
 void fcfs(int numberOfProcess, int processData[NUM_PROCESSDATATYPE][numberOfProcess],
           double *averageWaitingTime, double *averageTurnaroundTime)
 {
@@ -317,7 +320,10 @@ void fcfs(int numberOfProcess, int processData[NUM_PROCESSDATATYPE][numberOfProc
     *averageTurnaroundTime /= numberOfProcess;
 }
 
-// main display function
+
+
+/* -------------------------- main display function ------------------------- */
+
 void display(int numberOfProcess, int processData[NUM_PROCESSDATATYPE][numberOfProcess],
              double averageWaitingTime, double averageTurnaroundTime)
 {
@@ -337,6 +343,7 @@ void display(int numberOfProcess, int processData[NUM_PROCESSDATATYPE][numberOfP
 /* -------------------------------------------------------------------------- */
 /*                               helper function                              */
 /* -------------------------------------------------------------------------- */
+
 
 int find(int array[], int value, int end){
     for (int i = 0; i < end; i++)
