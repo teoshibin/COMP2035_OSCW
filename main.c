@@ -28,7 +28,6 @@ typedef enum
     NUM_PROCESSDATATYPE
 } processDataType;
 
-
 /* -------------------------------------------------------------------------- */
 /*                             function prototype                             */
 /* -------------------------------------------------------------------------- */
@@ -93,167 +92,152 @@ int main()
     return 0;
 }
 
-
 /* -------------------------------------------------------------------------- */
 /*                                  functions                                 */
 /* -------------------------------------------------------------------------- */
 
-// round robin
+/* ------------------------------- round robin ------------------------------ */
+
 void rr(int numberOfProcess, int processData[NUM_PROCESSDATATYPE][numberOfProcess], int timeQuantum, int overHead, double *averageWaitingTime, double *averageTurnaroundTime)
 {
-    // TODO remove this
-    // void removeArrayElement(int array[], int index, int *end);
-    
-    void selectiveSortProcess(int numberOfProcess, int processData[NUM_PROCESSDATATYPE][numberOfProcess], processDataType type);
-    int deque(int size, int array[size], int *front, int *fill, int rear);
-    void enque(int size, int array[size], int front, int *rear, int *fill, int value);
 
-    //--------------------------private variables initialization--------------------------
+    /* -------------------------------- prototype ------------------------------- */
+
+    void removeArrayElement(int array[], int index, int *end);
+    void selectiveSortProcess(int numberOfProcess, int processData[NUM_PROCESSDATATYPE][numberOfProcess], processDataType type);
+    int deque(int size, int array[size], int *front, int rear, int *fill);
+    void enque(int size, int array[size], int front, int *rear, int *fill, int value);
+    int noDuplicate(int size, int array[size], int value);
+    int find(int array[], int value, int end);
+
+    /* -------------------------------- variable -------------------------------- */
+
     int currentTimeFrame = 0;             // current time
     int previousTimeFrame = -timeQuantum; // previous current time
     int remainingProcesses = numberOfProcess;
-    int rrIndex = 0;                            // round robin value
-    int workingProcessIndex = -1;               // current working process index
-    int arrivedProcessesCounter = 0;            // index of (int arrivedProcessesIndex[numberOfProcess];) variable
+    int rrIndex = 0;                 // round robin value
+    int workingProcessIndex = -1;    // current working process index
+    int arrivedProcessesCounter = 0; // index of (int arrivedProcessesIndex[numberOfProcess];) variable
 
-    // TODO remove this variable
-    // int arrivedProcessesIndex[numberOfProcess]; // add or remove the index of process to list if arrive or done
+    int arrivedProcessesIndex[numberOfProcess]; // add or remove the index of process to list if arrive or done
 
-
-    int reducingBurstTime[numberOfProcess];     // gradually reduce burst time to 0 and set it as done
+    int reducingBurstTime[numberOfProcess]; // gradually reduce burst time to 0 and set it as done
     int doneProcessBoolean = 0;
     int totalTurnaroundTime = 0;
     int totalWaitingTime = 0;
 
     // queue realated variable
     int readyQueue[numberOfProcess];
-    int fill = 0; // queue length
+    int fill = 0;  // queue length
     int front = 0; // queue head
-    int rear = 0; // queue tail
+    int rear = 0;  // queue tail
 
-    //--------------------------------------------RR Algorithms-------------------------------------------
+    /* ------------------------------- initialize ------------------------------- */
+    
+    // printf("\n\n\nid\tstart\tburst\tturnaround\twait\tarrival\n");
+    // for (int i = 0; i < numberOfProcess; i++)
+    // {
+    //     for (int j = 0; j < NUM_PROCESSDATATYPE; j++)
+    //     {
+    //         printf("%d\t", processData[j][i]);
+    //     }
+    //     printf("\n");
+    // }
 
-    // copy burst time to temp array
+    // sort by arrival time
+    selectiveSortProcess(numberOfProcess, processData, arrivalTime);
+
     for (int i = 0; i < numberOfProcess; i++)
     {
-        reducingBurstTime[i] = processData[burstTime][i];
+        reducingBurstTime[i] = processData[burstTime][i]; // duplicate burst time
+        processData[turnaroundTime][i] = 0;               //init turnaround time
+        processData[waitingTime][i] = 0;                  // init waiting time
+        readyQueue[i] = EMPTY;
     }
 
-    // initialize all arrived process index
-    for (int i = 0; i < numberOfProcess; i++)
-    {
-        processData[turnaroundTime][i] = 0;
-        processData[waitingTime][i] = 0;
-    }
+    /* ----------------------------- algorithm body ----------------------------- */
 
     // while there is still remaining job then continue looping
     while (remainingProcesses)
     {
-        /// check for arrival and update arrival list
+        // add new arrival to ready queue
         for (int i = 0; i < numberOfProcess; i++)
         {
-            if (processData[arrivalTime][i] <= currentTimeFrame && reducingBurstTime[i] != 0)
+            if (processData[arrivalTime][i] > previousTimeFrame && processData[arrivalTime][i] <= currentTimeFrame)
             {
-                
-            }
+                arrivedProcessesIndex[arrivedProcessesCounter++] = i;
+                enque(numberOfProcess, readyQueue, front, &rear, &fill, i);
 
-            // if arrival comes after previous time and before or equql to current time then register new arrival
-            // if (processData[arrivalTime][i] > previousTimeFrame && processData[arrivalTime][i] <= currentTimeFrame)
-            // {
-            //     //store process index of the arrived job
-            //     arrivedProcessesIndex[arrivedProcessesCounter] = i;
-            //     arrivedProcessesCounter++;
-            // }
+                processData[turnaroundTime][i] += currentTimeFrame - processData[arrivalTime][i];
+                processData[waitingTime][i] += currentTimeFrame - processData[arrivalTime][i];
+            }
+        }
+
+        // add old arrival to ready queue
+        for (int i = 0; i < numberOfProcess; i++)
+        {
+            if (processData[arrivalTime][i] <= previousTimeFrame && reducingBurstTime[i] != 0 && noDuplicate(numberOfProcess, readyQueue, i))
+            {
+                enque(numberOfProcess, readyQueue, front, &rear, &fill, i);
+            }
         }
 
         previousTimeFrame = currentTimeFrame;
 
-        /// round robin
-        // if only one job and same job as previous quantum time
-        // if more than one job and it is not the initial time frame
-        // then do not do round robin and do not add overhead
-        if (((arrivedProcessesCounter == 1) && (arrivedProcessesIndex[rrIndex] == workingProcessIndex)) ||
-            (arrivedProcessesCounter > 1 && currentTimeFrame == 0))
+        /* --------------------------------- New Process Algo ----------------------------------------------*/
+
+        // if no process in ready queue
+        if (fill == 0)
         {
-            rrIndex = 0;
-            workingProcessIndex = arrivedProcessesIndex[rrIndex];
-        } // previous process not equal to current process then add overhead
-        else if (arrivedProcessesIndex[rrIndex] != workingProcessIndex)
-        {
-            rrIndex = 0;
-            workingProcessIndex = arrivedProcessesIndex[rrIndex];
-            currentTimeFrame += overHead;
-        } // if more than one job and not initial time frame then add overhead and start round robin
-        else if (arrivedProcessesCounter > 1 && currentTimeFrame != 0)
-        {
-            // only increament rrIndex if same numbers of process is running in previous iteration
-            // bcs when rrIndex is larger than counter meaning a process is removed from the arrivedProcess list
-            // if we increament and mod it with different numbers of jobs than last time it will not go back to 0
-            // when rrindex equal to coutner, mod(rrindex, counter) will turn rrindex back to 0
-            rrIndex++;
-            rrIndex %= arrivedProcessesCounter; // circular round robin 0,1,2,0,1,2
-            workingProcessIndex = arrivedProcessesIndex[rrIndex];
-            currentTimeFrame += overHead;
+            currentTimeFrame++;
+            continue;
         }
-
-        /// processing
-        // if there is atleast one arrived job
-        if (arrivedProcessesCounter > 0)
+        
+        workingProcessIndex = deque(numberOfProcess, readyQueue, &front, rear, &fill);
+        
+        // if burst time smaller than time quantum
+        if (reducingBurstTime[workingProcessIndex] <= timeQuantum)
         {
-            // if burst time smaller than time quantum
-            if (reducingBurstTime[workingProcessIndex] <= timeQuantum)
-            {
-                // adjust time
-                currentTimeFrame += reducingBurstTime[workingProcessIndex];
-
-                // reduce burst time
-                reducingBurstTime[workingProcessIndex] = 0;
-
-                // remove done process from arrived list
-                // removeArrayElement(arrivedProcessesIndex, rrIndex, &arrivedProcessesCounter);
-
-                remainingProcesses--;
-                doneProcessBoolean = 1;
-            }
-            else if (reducingBurstTime[workingProcessIndex] > timeQuantum)
-            {
-                // adjust time
-                currentTimeFrame += timeQuantum;
-
-                // reduce burst time
-                reducingBurstTime[workingProcessIndex] -= timeQuantum;
-            }
-
-            // add turnaround time to all arrived job
-            for (int i = 0; i < arrivedProcessesCounter; i++)
-            {
-                processData[turnaroundTime][arrivedProcessesIndex[i]] += currentTimeFrame - previousTimeFrame;
-            }
-
-            // add waiting time to all already arrived but not working jobs
-            for (int i = 0; i < arrivedProcessesCounter; i++)
-            {
-                if (arrivedProcessesIndex[i] != workingProcessIndex)
-                {
-                    processData[waitingTime][arrivedProcessesIndex[i]] += currentTimeFrame - previousTimeFrame;
-                }
-            }
-
-            if (doneProcessBoolean)
-            {
-                removeArrayElement(arrivedProcessesIndex, rrIndex, &arrivedProcessesCounter);
-                // output value
-                printf("\nProcess[%d]\t\t%d\t\t %d\t\t\t %d",
-                       workingProcessIndex + 1,
-                       processData[burstTime][workingProcessIndex],
-                       processData[turnaroundTime][workingProcessIndex],
-                       processData[waitingTime][workingProcessIndex]);
-                doneProcessBoolean = 0;
-            }
-        }
-        else
+            // adjust time
+            currentTimeFrame += reducingBurstTime[workingProcessIndex];
+            // reduce burst time
+            reducingBurstTime[workingProcessIndex] = 0;
+            remainingProcesses--;
+            doneProcessBoolean = 1;
+        } // larger than time quantum
+        else if (reducingBurstTime[workingProcessIndex] > timeQuantum)
         {
+            // adjust time
             currentTimeFrame += timeQuantum;
+            // reduce burst time
+            reducingBurstTime[workingProcessIndex] -= timeQuantum;
+        }
+
+        // add turnaround time to all arrived job
+        for (int i = 0; i < arrivedProcessesCounter; i++)
+        {
+            processData[turnaroundTime][arrivedProcessesIndex[i]] += currentTimeFrame - previousTimeFrame;
+        }
+        // add waiting time to all already arrived but not working jobs
+        for (int i = 0; i < arrivedProcessesCounter; i++)
+        {
+            if (i != find(arrivedProcessesIndex, workingProcessIndex, arrivedProcessesCounter))
+            {
+                processData[waitingTime][arrivedProcessesIndex[i]] += currentTimeFrame - previousTimeFrame;
+            }
+        }
+
+        if (doneProcessBoolean)
+        {
+            removeArrayElement(arrivedProcessesIndex, find(arrivedProcessesIndex, workingProcessIndex, arrivedProcessesCounter), &arrivedProcessesCounter);
+            // output value
+            printf("\nProcess[%d]\t\t%d\t\t %d\t\t\t %d",
+                   processData[processID][workingProcessIndex],
+                   processData[burstTime][workingProcessIndex],
+                   processData[turnaroundTime][workingProcessIndex],
+                   processData[waitingTime][workingProcessIndex]);
+
+            doneProcessBoolean = 0;
         }
     }
 
@@ -354,6 +338,17 @@ void display(int numberOfProcess, int processData[NUM_PROCESSDATATYPE][numberOfP
 /*                               helper function                              */
 /* -------------------------------------------------------------------------- */
 
+int find(int array[], int value, int end){
+    for (int i = 0; i < end; i++)
+    {
+        if (array[i] == value)
+        {
+            return i;
+        }
+    }    
+    return -1;
+}
+
 void removeArrayElement(int array[], int index, int *end)
 {
     for (int i = index; i < *end - 1; i++)
@@ -367,6 +362,17 @@ void removeArrayElement(int array[], int index, int *end)
     *end -= 1;
 }
 
+int noDuplicate(int size, int array[size], int value){
+    for (int i = 0; i < size; i++)
+    {
+        if (array[i] == value)
+        {
+            return 0;
+        }
+    }
+    return 1;
+}
+
 void enque(int size, int array[size], int front, int *rear, int *fill, int value)
 {
     if (*fill < size)
@@ -378,13 +384,13 @@ void enque(int size, int array[size], int front, int *rear, int *fill, int value
     }
 }
 
-int deque(int size, int array[size], int *front, int *fill, int rear)
+int deque(int size, int array[size], int *front, int rear, int *fill)
 {
     int value = EMPTY;
     if (*fill)
     {
         value = array[*front];
-        array[*front] = -1;
+        array[*front] = EMPTY;
         *front += 1;
         *front %= size;
         *fill -= 1;
@@ -421,20 +427,22 @@ void selectiveSortProcess(int numberOfProcess, int processData[NUM_PROCESSDATATY
 
 void swapProcessData(int numberOfProcess, int processData[NUM_PROCESSDATATYPE][numberOfProcess], processDataType type, int index1, int index2)
 {
+    int temp = 0;
+
     switch (type)
     {
     // swap all
     case NUM_PROCESSDATATYPE:
         for (int i = 0; i < NUM_PROCESSDATATYPE; i++)
         {
-            int temp = processData[i][index2];
+            temp = processData[i][index2];
             processData[i][index2] = processData[i][index1];
             processData[i][index1] = temp;
         }
         break;
-    // swap type only
+    // swap certain type only
     default:
-        int temp = processData[type][index2];
+        temp = processData[type][index2];
         processData[type][index2] = processData[type][index1];
         processData[type][index1] = temp;
         break;
