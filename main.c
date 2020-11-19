@@ -86,11 +86,11 @@ int main()
 
     // fcfs algorithms
     // fcfs(numberOfProcess, processData, &averageWaitingTime, &averageTurnaroundTime);
-    // sjf(numberOfProcess, processData, &averageWaitingTime, &averageTurnaroundTime);
-    rr(numberOfProcess, processData, timeQuantum, overHead, &averageWaitingTime, &averageTurnaroundTime);
+    sjf(numberOfProcess, processData, &averageWaitingTime, &averageTurnaroundTime);
+    // rr(numberOfProcess, processData, timeQuantum, overHead, &averageWaitingTime, &averageTurnaroundTime);
 
     // display function
-    // display(numberOfProcess, processData, averageWaitingTime, averageTurnaroundTime);
+    display(numberOfProcess, processData, averageWaitingTime, averageTurnaroundTime);
 
     return 0;
 }
@@ -255,40 +255,20 @@ void rr(int numberOfProcess, int processData[NUM_PROCESSDATATYPE][numberOfProces
 
 /* --------------------------- shortest job first --------------------------- */
 
-void sjf(int numberOfProcess, int processData[NUM_PROCESSDATATYPE][numberOfProcess],
-         double *averageWaitingTime, double *averageTurnaroundTime)
+void sjf(int numberOfProcess, int processData[NUM_PROCESSDATATYPE][numberOfProcess], double *averageWaitingTime, double *averageTurnaroundTime)
 {
+
+    void selectiveSortProcess(int numberOfProcess, int processData[NUM_PROCESSDATATYPE][numberOfProcess], processDataType type);
 
     int smallestValueIndex;
     int temp;
     int j;
 
     // selection sort
-    for (int i = 0; i < numberOfProcess; i++)
-    {
-        smallestValueIndex = i;
-
-        // compare i to j
-        for (int j = i + 1; j < numberOfProcess; j++)
-        {
-            if (processData[burstTime][j] < processData[burstTime][i])
-                smallestValueIndex = j;
-        }
-
-        // swap if current burst time is not the smallest burst time
-        if (smallestValueIndex != i)
-        {
-            temp = processData[burstTime][i];
-            processData[burstTime][i] = processData[burstTime][smallestValueIndex];
-            processData[burstTime][smallestValueIndex] = temp;
-
-            temp = processData[processID][i];
-            processData[processID][i] = processData[processID][smallestValueIndex];
-            processData[processID][smallestValueIndex] = temp;
-        }
-    }
+    selectiveSortProcess(numberOfProcess, processData, burstTime);
 
     fcfs(numberOfProcess, processData, averageWaitingTime, averageTurnaroundTime);
+    
 }
 
 
