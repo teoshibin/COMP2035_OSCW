@@ -14,6 +14,7 @@
 /* ----------------------------------- lib ---------------------------------- */
 
 #include <stdio.h>
+#include <string.h>
 
 /* ---------------------------------- macro --------------------------------- */
 
@@ -34,23 +35,33 @@ typedef enum
     NUM_PROCESSDATATYPE
 } processDataType;
 
+typedef enum
+{
+    att = 0,
+    awt = 1,
+    art = 2,
+    cu = 3,
+    score = 4,
+    NUM_RESULTTYPE
+} resultType;
+
+typedef enum
+{
+    firstComeFirstServe = 0,
+    shortestJobFirst = 1,
+    roundRobin = 2,
+    NUM_ALGORITHMSTYPE
+} algorithmsType;
+
 /* -------------------------------- prototype ------------------------------- */
 
 void rr(int numberOfProcess, int processData[NUM_PROCESSDATATYPE][numberOfProcess], int timeQuantum, int contextSwitchingTime, int *contextSwitches);
-
-// void fcfs(int numberOfProcess, int processData[NUM_PROCESSDATATYPE][numberOfProcess],
-//           double *averageWaitingTime, double *averageTurnaroundTime);
-
-void fcfs(int numberOfProcess, int processData[NUM_PROCESSDATATYPE][numberOfProcess], int overheadTime, int* overheadCount);
-
-void sjf(int numberOfProcess, int processData[NUM_PROCESSDATATYPE][numberOfProcess], int contextSwitchingTime, int* contextSwitches);
-
-void display(int numberOfProcess, int processData[NUM_PROCESSDATATYPE][numberOfProcess],
-             double averageWaitingTime, double averageTurnaroundTime);
-
-void display2(int numberOfProcess, int processData[NUM_PROCESSDATATYPE][numberOfProcess], int contextSwitches);
-
+void fcfs(int numberOfProcess, int processData[NUM_PROCESSDATATYPE][numberOfProcess], int overheadTime, int *overheadCount);
+void sjf(int numberOfProcess, int processData[NUM_PROCESSDATATYPE][numberOfProcess], int contextSwitchingTime, int *contextSwitches);
+void display(int numberOfProcess, int processData[NUM_PROCESSDATATYPE][numberOfProcess], int contextSwitches);
 void reset(int size, int array[NUM_PROCESSDATATYPE][size]);
+void calculateAverage(int numberOfProcess, int processData[NUM_PROCESSDATATYPE][numberOfProcess], double result[NUM_RESULTTYPE]);
+char* returnBestAlgorithms(double fcfsResult[NUM_RESULTTYPE], double sjfResult[NUM_RESULTTYPE], double rrResult[NUM_RESULTTYPE]);
 
 /* -------------------------------------------------------------------------- */
 /*                                main function                               */
@@ -62,46 +73,84 @@ int main()
     int timeQuantum;
     int contextSwitchingTime;
     int numberOfProcess, j;
-    double averageWaitingTime = 0;
-    double averageTurnaroundTime = 0;
     int contextSwitches = 0;
+    double fcfsResult[NUM_RESULTTYPE];
+    double sjfResult[NUM_RESULTTYPE];
+    double rrResult[NUM_RESULTTYPE];
 
-    // input
-    printf("\nEnter total number of processes:");
-    scanf("%d", &numberOfProcess);
-
-    int processData[NUM_PROCESSDATATYPE][numberOfProcess];
-
-    reset(numberOfProcess, processData);
-
-    for (int i = 0; i < numberOfProcess; i++)
+    while (1)
     {
-        processData[processID][i] = i + 1;
-        printf("\nEnter Details of Process[%d]\n", processData[processID][i]);
-        printf("Arrival Time:\t");
-        scanf("%d", &processData[arrivalTime][i]);
-        printf("Burst Time:\t");
-        scanf("%d", &processData[burstTime][i]);
+        printf("\n\n=== PROCESS SCHEDULING ===\n\n");
+
+        do
+        {
+            printf("Enter total number of processes:");
+            scanf("%d", &numberOfProcess);
+        } while (numberOfProcess <= 0 ? printf("!! Invalid process number !!\n\n") : 0);
+
+        int processData[NUM_PROCESSDATATYPE][numberOfProcess];
+        int fcfsProcessData[NUM_PROCESSDATATYPE][numberOfProcess];
+        int sjfProcessData[NUM_PROCESSDATATYPE][numberOfProcess];
+        int rrProcessData[NUM_PROCESSDATATYPE][numberOfProcess];
+
+        reset(numberOfProcess, processData);
+
+        for (int i = 0; i < numberOfProcess; i++)
+        {
+            processData[processID][i] = i + 1;
+
+            printf("\nEnter Details of Process[%d]\n", processData[processID][i]);
+
+            do
+            {
+                printf("Arrival Time:\t");
+                scanf("%d", &processData[arrivalTime][i]);
+            } while (processData[arrivalTime][i] < 0 ? printf("!! Invalid arrival time !!\n\n") : 0);
+
+            do
+            {
+                printf("Burst Time:\t");
+                scanf("%d", &processData[burstTime][i]);
+            } while (processData[burstTime][i] < 0 ? printf("!! Invalid burst time !!\n\n") : 0);
+        }
+
+        do
+        {
+            printf("\nEnter Time Quantum: \t");
+            scanf("%d", &timeQuantum);
+        } while (timeQuantum <= 0 ? printf("!! Please enter a number that is > 0 !!\n\n") : 0);
+
+        do
+        {
+            printf("Enter context switching time:\t");
+            scanf("%d", &contextSwitchingTime);
+        } while (contextSwitchingTime < 0 ? printf("!! Please enter a number above 0 !!") : 0);
+
+        memcpy(fcfsProcessData, processData, NUM_PROCESSDATATYPE * numberOfProcess * sizeof(int));
+        memcpy(sjfProcessData, processData, NUM_PROCESSDATATYPE * numberOfProcess * sizeof(int));
+        memcpy(rrProcessData, processData, NUM_PROCESSDATATYPE * numberOfProcess * sizeof(int));
+
+        printf("\n\n- FIRST COME FIRST SERVE SCHEDULING ALGORITHMS -\n");
+        fcfs(numberOfProcess, fcfsProcessData, contextSwitchingTime, &contextSwitches);
+        display(numberOfProcess, fcfsProcessData, contextSwitches);
+        contextSwitches = 0;
+
+        printf("\n\n- SHORTEST JOB FIRST SCHEDULING ALGORITHMS -\n");
+        sjf(numberOfProcess, sjfProcessData, contextSwitchingTime, &contextSwitches);
+        display(numberOfProcess, sjfProcessData, contextSwitches);
+        contextSwitches = 0;
+
+        printf("\n\n- ROUND ROBIN SCHEDULING ALGORITHMS -\n");
+        rr(numberOfProcess, rrProcessData, timeQuantum, contextSwitchingTime, &contextSwitches);
+        display(numberOfProcess, rrProcessData, contextSwitches);
+        contextSwitches = 0;
+
+        calculateAverage(numberOfProcess, fcfsProcessData, fcfsResult);
+        calculateAverage(numberOfProcess, sjfProcessData, sjfResult);
+        calculateAverage(numberOfProcess, rrProcessData, rrResult);
+
+        printf("\nThe Best Scheduling Algorithms for this workload is(are) : %s\n", returnBestAlgorithms(fcfsResult, sjfResult, rrResult));
     }
-
-    printf("\nEnter Time Quantum:\t");
-    scanf("%d", &timeQuantum);
-
-    printf("\nEnter context switching time:\t");
-    scanf("%d", &contextSwitchingTime);
-
-    // printf("\nProcess ID\t\t Burst Time\t Turnaround Time\t Waiting Time\n");
-    // printf("\nProcess ID\t\tArrival Time\t Burst Time\t Turnaround Time\t Waiting Time\n");
-
-    // fcfs algorithms
-    // fcfs(numberOfProcess, processData, contextSwitchingTime, &contextSwitches);
-    sjf(numberOfProcess, processData, contextSwitchingTime, &contextSwitches);
-    // rr(numberOfProcess, processData, timeQuantum, contextSwitchingTime, &contextSwitches);
-
-    // display function
-    // display(numberOfProcess, processData, averageWaitingTime, averageTurnaroundTime);
-    display2(numberOfProcess, processData, contextSwitches);
-
     return 0;
 }
 
@@ -133,7 +182,7 @@ void rr(
     //loop related
     int currentTimeFrame = 0;             // current time
     int previousTimeFrame = -timeQuantum; // previous current time
-    int workingProcessIndex = EMPTY; // current working process index
+    int workingProcessIndex = EMPTY;      // current working process index
     int previousWorkingIndex = 1;
     int remainingProcesses = numberOfProcess;
     int reducingBurstTime[numberOfProcess]; // gradually reduce burst time to 0 and set it as done
@@ -237,8 +286,6 @@ void rr(
 
     /* ---------------------------- calculate output ---------------------------- */
 
-    selectiveSortProcess(numberOfProcess, processData, processID);
-
     for (int i = 0; i < numberOfProcess; i++)
     {
         processData[turnaroundTime][i] = processData[completionTime][i] - processData[arrivalTime][i];
@@ -254,8 +301,7 @@ void sjf(
     int numberOfProcess,
     int processData[NUM_PROCESSDATATYPE][numberOfProcess],
     int contextSwitchingTime,
-    int* contextSwitches
-)
+    int *contextSwitches)
 {
 
     // prototype
@@ -276,27 +322,30 @@ void fcfs(
     int numberOfProcess,
     int processData[NUM_PROCESSDATATYPE][numberOfProcess],
     int overheadTime,
-    int* overheadCount
-    )
+    int *overheadCount)
 {
     void selectiveSortProcess(int numberOfProcess, int processData[NUM_PROCESSDATATYPE][numberOfProcess], processDataType type);
 
     //TODO completionTime = arrival time + turn time, arrivalTime
- 
+
     selectiveSortProcess(numberOfProcess, processData, arrivalTime);
 
     processData[respondTime][0] = processData[arrivalTime][0];
     processData[completionTime][0] = processData[burstTime][0] + processData[arrivalTime][0];
 
-    for (int i = 1; i < numberOfProcess; i++){     
-       
-        if(processData[completionTime][i-1] > processData[arrivalTime][i]){
-            processData[completionTime][i] = processData[completionTime][i-1] + processData[burstTime][i];
-        } else {
+    for (int i = 1; i < numberOfProcess; i++)
+    {
+
+        if (processData[completionTime][i - 1] > processData[arrivalTime][i])
+        {
+            processData[completionTime][i] = processData[completionTime][i - 1] + processData[burstTime][i];
+        }
+        else
+        {
             processData[completionTime][i] = processData[arrivalTime][i] + processData[burstTime][i];
-        }     
+        }
         processData[completionTime][i] += overheadTime;
-        processData[respondTime][i] = processData[completionTime][i-1];
+        processData[respondTime][i] = processData[completionTime][i - 1];
         *overheadCount += 1;
     }
 
@@ -305,40 +354,19 @@ void fcfs(
         processData[turnaroundTime][i] = processData[completionTime][i] - processData[arrivalTime][i];
         processData[waitingTime][i] = processData[turnaroundTime][i] - processData[burstTime][i];
     }
-
-    //------------------------------------------
-     
-    // processData[waitingTime][0] = 0;
-
-    // for (int i = 1; i < numberOfProcess; i++)
-    // {
-    //     processData[waitingTime][i] = 0;
-    //     for (int j = 0; j < i; j++)
-    //         processData[waitingTime][i] += processData[burstTime][j];
-    // }
-
-    // for (int i = 0; i < numberOfProcess; i++)
-    // {
-    //     processData[respondTime][i] = i == 0 ? 0 : processData[turnaroundTime][i - 1];
-    //     processData[turnaroundTime][i] = processData[burstTime][i] + processData[waitingTime][i];
-    //     processData[completionTime][i] = processData[turnaroundTime][i] + processData[arrivalTime][i];
-    // }
-
-    
-
 }
 
 /* -------------------------------------------------------------------------- */
 /*                              display function                              */
 /* -------------------------------------------------------------------------- */
 
-void display2(
+void display(
     int numberOfProcess,
     int processData[NUM_PROCESSDATATYPE][numberOfProcess],
     int contextSwitches)
 {
 
-    int max(int size, int array[size]);
+    int maxInt(int size, int array[size]);
 
     double averageTurnaroundTime = 0;
     double averageWaitingTime = 0;
@@ -357,7 +385,7 @@ void display2(
     averageWaitingTime = (double)averageWaitingTime / numberOfProcess;
     averageTurnaroundTime = (double)averageTurnaroundTime / numberOfProcess;
     averageRespondTime = (double)averageRespondTime / numberOfProcess;
-    cpuUsage = (double)cpuUsage / max(numberOfProcess, processData[completionTime]) * 100;
+    cpuUsage = (double)cpuUsage / maxInt(numberOfProcess, processData[completionTime]) * 100;
 
     //TODO printf("Algorithms: %s", )
     printf("\nProcess ID\tArrival Time\t Burst Time\t Turnaround Time\t Waiting Time\t Respond Time\t Completion Time");
@@ -381,28 +409,8 @@ void display2(
     printf("\nCPU Utilization:\t\t%.2f %%\n\n", cpuUsage);
 }
 
-
-
-void display(
-    int numberOfProcess,
-    int processData[NUM_PROCESSDATATYPE][numberOfProcess],
-    double averageWaitingTime,
-    double averageTurnaroundTime)
+void reset(int size, int array[NUM_PROCESSDATATYPE][size])
 {
-
-    printf("\nProcess\t\tStart Time\tBurst Time\tWaiting Time\tTurnaround Time");
-
-    for (int k = 0; k < numberOfProcess; k++)
-    {
-        printf("\nP[%d]\t\t%d\t\t%d\t\t%d\t\t%d", processData[processID][k], processData[respondTime][k], processData[burstTime][k], processData[waitingTime][k], processData[turnaroundTime][k]);
-    }
-
-    printf("\n\nAverage Waiting Time: %.2f \n", averageWaitingTime);
-    printf("Average Turnaround Time: %.2f \n\n", averageTurnaroundTime);
-    printf("CPU Usage: %.2f%% \n\n", ((double)numberOfProcess / CPU_CAPABILITY) * 100);
-}
-
-void reset(int size, int array[NUM_PROCESSDATATYPE][size]){
     for (int i = 0; i < NUM_PROCESSDATATYPE; i++)
     {
         for (int j = 0; j < size; j++)
@@ -416,7 +424,8 @@ void reset(int size, int array[NUM_PROCESSDATATYPE][size]){
 /*                               helper function                              */
 /* -------------------------------------------------------------------------- */
 
-int max(int size, int array[size]){
+int maxInt(int size, int array[size])
+{
     int maxNum = array[0];
 
     for (int i = 1; i < size; i++)
@@ -427,6 +436,48 @@ int max(int size, int array[size]){
         }
     }
     return maxNum;
+}
+
+double max(int size, double array[size])
+{
+    double maxNum = array[0];
+
+    for (int i = 1; i < size; i++)
+    {
+        if (array[i] > maxNum)
+        {
+            maxNum = array[i];
+        }
+    }
+    return maxNum;
+}
+
+double min(int size, double array[size])
+{
+    double minNum = array[0];
+
+    for (int i = 1; i < size; i++)
+    {
+        if (array[i] < minNum)
+        {
+            minNum = array[i];
+        }
+    }
+    return minNum;
+}
+
+int minIndex(int size, int array[size])
+{
+    int minIndex = 0;
+
+    for (int i = 1; i < size; i++)
+    {
+        if (array[i] < array[minIndex])
+        {
+            minIndex = i;
+        }
+    }
+    return minIndex;
 }
 
 // check if value is in an array (contain : return false; not contain : return true)
@@ -504,17 +555,131 @@ void selectiveSortProcess(int numberOfProcess, int processData[NUM_PROCESSDATATY
             {
                 processData[k][i] = temp[k];
             }
-            
         }
     }
 }
 
-void shiftProcessData(int numberOfProcess, int processData[NUM_PROCESSDATATYPE][numberOfProcess], int start, int end){
+void shiftProcessData(int numberOfProcess, int processData[NUM_PROCESSDATATYPE][numberOfProcess], int start, int end)
+{
     for (int i = end; i > start; i--)
     {
         for (int j = 0; j < NUM_PROCESSDATATYPE; j++)
         {
-            processData[j][i] = processData[j][i-1];
+            processData[j][i] = processData[j][i - 1];
         }
-    }    
+    }
+}
+
+void calculateAverage(int numberOfProcess, int processData[NUM_PROCESSDATATYPE][numberOfProcess], double result[NUM_RESULTTYPE])
+{
+    int maxInt(int size, int array[size]);
+
+    double averageTurnaroundTime = 0;
+    double averageWaitingTime = 0;
+    double averageRespondTime = 0;
+    double cpuUsage = 0;
+
+    // add all together
+    for (int i = 0; i < numberOfProcess; i++)
+    {
+        averageTurnaroundTime += processData[turnaroundTime][i];
+        averageWaitingTime += processData[waitingTime][i];
+        averageRespondTime += processData[respondTime][i];
+        cpuUsage += processData[burstTime][i];
+    }
+
+    result[awt] = (double)averageWaitingTime / numberOfProcess;
+    result[att] = (double)averageTurnaroundTime / numberOfProcess;
+    result[art] = (double)averageRespondTime / numberOfProcess;
+    result[cu] = (double)cpuUsage / maxInt(numberOfProcess, processData[completionTime]) * 100;
+}
+
+char* returnBestAlgorithms(double fcfsResult[NUM_RESULTTYPE], double sjfResult[NUM_RESULTTYPE], double rrResult[NUM_RESULTTYPE])
+{
+    void addScore(double temp[NUM_ALGORITHMSTYPE], double fcfsResult[NUM_ALGORITHMSTYPE], double sjfResult[NUM_RESULTTYPE], double rrResult[NUM_RESULTTYPE], double value);
+    double max(int size, double array[size]);
+    double min(int size, double array[size]);
+
+    double temp[NUM_ALGORITHMSTYPE];
+    double value;
+    int outputBoolean[NUM_ALGORITHMSTYPE];
+    char* msg = "";
+
+    for (int i = 0; i < NUM_RESULTTYPE; i++)
+    {
+        for (int k = 0; k < NUM_ALGORITHMSTYPE; k++)
+        {
+            switch (k)
+            {
+            case firstComeFirstServe:
+                temp[k] = fcfsResult[i];
+                break;
+            case shortestJobFirst:
+                temp[k] = sjfResult[i];
+                break;
+            case roundRobin:
+                temp[k] = rrResult[i];
+                break;
+            }
+        }
+
+        switch (i)
+        {
+        case cu:
+            value = max(NUM_ALGORITHMSTYPE, temp);
+            addScore(temp, fcfsResult, sjfResult, rrResult, value);
+            break;
+        case score:
+            value = max(NUM_ALGORITHMSTYPE, temp);
+            break;
+        default:
+            value = min(NUM_ALGORITHMSTYPE, temp);
+            addScore(temp, fcfsResult, sjfResult, rrResult, value);
+            break;
+        }
+    }
+
+    for (int i = 0; i < NUM_ALGORITHMSTYPE; i++)
+    {
+        if (value == temp[i])
+        {
+            outputBoolean[i] = 1;
+            switch (i)
+            {
+            case firstComeFirstServe:
+                strcat(msg, " fcfs");
+                break;
+            case shortestJobFirst:
+                strcat(msg, " sjf");
+                break;
+            case roundRobin:
+                strcat(msg, " rr");
+                break;
+            }
+        }
+    } 
+
+    return msg;
+}
+
+void addScore(double temp[NUM_ALGORITHMSTYPE], double fcfsResult[NUM_ALGORITHMSTYPE], double sjfResult[NUM_RESULTTYPE], double rrResult[NUM_RESULTTYPE], double value)
+{
+    for (int i = 0; i < NUM_ALGORITHMSTYPE; i++)
+    {
+        if (temp[i] == value)
+        {
+            switch (i)
+            {
+            case 0:
+                fcfsResult[score] += 1;
+                break;
+            case 1:
+                sjfResult[score] += 1;
+                break;
+            case 2:
+                rrResult[score] += 1;
+                break;
+            }
+        }
+    }
 }
