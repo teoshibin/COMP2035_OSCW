@@ -25,18 +25,18 @@
 typedef enum
 {
     processID = 0,
-    startTime = 1,
+    arrivalTime = 1,
     burstTime = 2,
-    waitingTime = 3,
-    turnaroundTime = 4,
-    arrivalTime = 5,
+    turnaroundTime = 3,
+    waitingTime = 4,
+    respondTime = 5,
+    completionTime = 6,
     NUM_PROCESSDATATYPE
 } processDataType;
 
 /* -------------------------------- prototype ------------------------------- */
 
-void rr(int numberOfProcess, int processData[NUM_PROCESSDATATYPE][numberOfProcess],
-        int timeQuantum, int ContextSwitchingTime, double *averageWaitingTime, double *averageTurnaroundTime);
+void rr(int numberOfProcess, int processData[NUM_PROCESSDATATYPE][numberOfProcess], int timeQuantum, int contextSwitchingTime, int *contextSwitches);
 
 void fcfs(int numberOfProcess, int processData[NUM_PROCESSDATATYPE][numberOfProcess],
           double *averageWaitingTime, double *averageTurnaroundTime);
@@ -47,6 +47,8 @@ void sjf(int numberOfProcess, int processData[NUM_PROCESSDATATYPE][numberOfProce
 void display(int numberOfProcess, int processData[NUM_PROCESSDATATYPE][numberOfProcess],
              double averageWaitingTime, double averageTurnaroundTime);
 
+void display2(int numberOfProcess, int processData[NUM_PROCESSDATATYPE][numberOfProcess], int contextSwitches);
+
 /* -------------------------------------------------------------------------- */
 /*                                main function                               */
 /* -------------------------------------------------------------------------- */
@@ -55,10 +57,11 @@ int main()
 {
     // input variable
     int timeQuantum;
-    int ContextSwitchingTime;
+    int contextSwitchingTime;
     int numberOfProcess, j;
     double averageWaitingTime = 0;
     double averageTurnaroundTime = 0;
+    int contextSwitches = 0;
 
     // input
     printf("\nEnter total number of processes:");
@@ -80,17 +83,19 @@ int main()
     scanf("%d", &timeQuantum);
 
     printf("\nEnter context switching time:\t");
-    scanf("%d", &ContextSwitchingTime);
+    scanf("%d", &contextSwitchingTime);
 
-    printf("\nProcess ID\t\tBurst Time\t Turnaround Time\t Waiting Time\n");
+    // printf("\nProcess ID\t\t Burst Time\t Turnaround Time\t Waiting Time\n");
+    // printf("\nProcess ID\t\tArrival Time\t Burst Time\t Turnaround Time\t Waiting Time\n");
 
     // fcfs algorithms
     // fcfs(numberOfProcess, processData, &averageWaitingTime, &averageTurnaroundTime);
     // sjf(numberOfProcess, processData, &averageWaitingTime, &averageTurnaroundTime);
-    rr(numberOfProcess, processData, timeQuantum, ContextSwitchingTime, &averageWaitingTime, &averageTurnaroundTime);
+    rr(numberOfProcess, processData, timeQuantum, contextSwitchingTime, &contextSwitches);
 
     // display function
     // display(numberOfProcess, processData, averageWaitingTime, averageTurnaroundTime);
+    display2(numberOfProcess, processData, contextSwitches);
 
     return 0;
 }
@@ -107,9 +112,8 @@ void rr(
     int numberOfProcess,
     int processData[NUM_PROCESSDATATYPE][numberOfProcess],
     int timeQuantum,
-    int ContextSwitchingTime,
-    double *averageWaitingTime,
-    double *averageTurnaroundTime)
+    int contextSwitchingTime,
+    int *contextSwitches)
 {
 
     /* -------------------------------- prototype ------------------------------- */
@@ -119,7 +123,6 @@ void rr(
     int deque(int size, int array[size], int *front, int rear, int *fill);
     void enque(int size, int array[size], int front, int *rear, int *fill, int value);
     int notContain(int size, int array[size], int value);
-    int find(int array[], int value, int end);
 
     /* -------------------------------- variable -------------------------------- */
 
@@ -130,10 +133,6 @@ void rr(
     int workingProcessIndex = EMPTY; // current working process index
     int previousWorkingIndex = 1;
 
-    int arrivedProcessesCounter = 0;       // index of (int arrivedProcesses[numberOfProcess];) variable
-    int arrivedProcesses[numberOfProcess]; // add or remove the index of process to list if arrive or done
-    int arrivedProcessIndex = 0;
-
     int remainingProcesses = numberOfProcess;
     int reducingBurstTime[numberOfProcess]; // gradually reduce burst time to 0 and set it as done
     int doneProcessBoolean = 0;
@@ -143,10 +142,6 @@ void rr(
     int fill = 0;  // queue length
     int front = 0; // queue head
     int rear = 0;  // queue tail
-
-    //output related
-    int totalTurnaroundTime = 0;
-    int totalWaitingTime = 0;
 
     /* ------------------------------- initialize ------------------------------- */
 
@@ -160,6 +155,7 @@ void rr(
         processData[waitingTime][i] = 0;                  // init waiting time
         readyQueue[i] = EMPTY;
     }
+    *contextSwitches = 0;
 
     /* ----------------------------- algorithm body ----------------------------- */
 
@@ -171,12 +167,7 @@ void rr(
         {
             if (processData[arrivalTime][i] > previousTimeFrame && processData[arrivalTime][i] <= currentTimeFrame)
             {
-                arrivedProcesses[arrivedProcessesCounter++] = i;
                 enque(numberOfProcess, readyQueue, front, &rear, &fill, i);
-
-                // add initial time difference between current and arrival time
-                processData[turnaroundTime][i] += currentTimeFrame - processData[arrivalTime][i];
-                processData[waitingTime][i] += currentTimeFrame - processData[arrivalTime][i];
             }
         }
 
@@ -204,9 +195,15 @@ void rr(
             previousWorkingIndex = workingProcessIndex;
         }
         workingProcessIndex = deque(numberOfProcess, readyQueue, &front, rear, &fill);
-        if (previousWorkingIndex != workingProcessIndex && workingProcessIndex != 0)
+        if (previousWorkingIndex != workingProcessIndex && currentTimeFrame != processData[arrivalTime][0])
         {
-            currentTimeFrame += ContextSwitchingTime;
+            currentTimeFrame += contextSwitchingTime;
+            *contextSwitches += 1;
+        }
+
+        if (reducingBurstTime[workingProcessIndex] == processData[burstTime][workingProcessIndex])
+        {
+            processData[respondTime][workingProcessIndex] = currentTimeFrame - processData[arrivalTime][workingProcessIndex];
         }
 
         // if burst time smaller than time quantum
@@ -227,39 +224,10 @@ void rr(
             reducingBurstTime[workingProcessIndex] -= timeQuantum;
         }
 
-        // find index of working process in arrivedProcesses using working process index
-        // arrivedProcesses is a container similar to RAM, currently running process will be stored in it
-        arrivedProcessIndex = find(arrivedProcesses, workingProcessIndex, arrivedProcessesCounter);
-
-        // add turnaround time to all arrived job
-        for (int i = 0; i < arrivedProcessesCounter; i++)
-        {
-            processData[turnaroundTime][arrivedProcesses[i]] += currentTimeFrame - previousTimeFrame;
-        }
-        // add context switching time as waiting time for arrived working process
-        if (workingProcessIndex != 0)
-        {
-            processData[waitingTime][arrivedProcesses[arrivedProcessIndex]] += ContextSwitchingTime;
-        }
-        // add waiting time and context switching time to all arrived and waiting processes
-        for (int i = 0; i < arrivedProcessesCounter; i++)
-        {
-            if (i != arrivedProcessIndex)
-            {
-                processData[waitingTime][arrivedProcesses[i]] += currentTimeFrame - previousTimeFrame;
-            }
-        }
-
+        // if a process is done
         if (doneProcessBoolean)
         {
-            removeArrayElement(arrivedProcesses, arrivedProcessIndex, &arrivedProcessesCounter);
-            // output value
-            printf("\nProcess[%d]\t\t%d\t\t %d\t\t\t %d",
-                   processData[processID][workingProcessIndex],
-                   processData[burstTime][workingProcessIndex],
-                   processData[turnaroundTime][workingProcessIndex],
-                   processData[waitingTime][workingProcessIndex]);
-
+            processData[completionTime][workingProcessIndex] = currentTimeFrame;
             doneProcessBoolean = 0;
         }
     }
@@ -270,15 +238,9 @@ void rr(
 
     for (int i = 0; i < numberOfProcess; i++)
     {
-        totalTurnaroundTime += processData[turnaroundTime][i];
-        totalWaitingTime += processData[waitingTime][i];
+        processData[turnaroundTime][i] = processData[completionTime][i] - processData[arrivalTime][i];
+        processData[waitingTime][i] = processData[turnaroundTime][i] - processData[burstTime][i];
     }
-
-    *averageWaitingTime = (double)totalWaitingTime / numberOfProcess;
-    *averageTurnaroundTime = (double)totalTurnaroundTime / numberOfProcess;
-
-    printf("\n\nAverage Waiting Time:\t%.2f", *averageWaitingTime);
-    printf("\nAverage Turnaround Time:\t%.2f\n", *averageTurnaroundTime);
 }
 
 /* -------------------------------------------------------------------------- */
@@ -329,7 +291,7 @@ void fcfs(
 
     for (int i = 0; i < numberOfProcess; i++)
     {
-        processData[startTime][i] = i == 0 ? 0 : processData[turnaroundTime][i - 1];
+        processData[respondTime][i] = i == 0 ? 0 : processData[turnaroundTime][i - 1];
         processData[turnaroundTime][i] = processData[burstTime][i] + processData[waitingTime][i];
         *averageWaitingTime += processData[waitingTime][i];
         *averageTurnaroundTime += processData[turnaroundTime][i];
@@ -343,6 +305,56 @@ void fcfs(
 /*                              display function                              */
 /* -------------------------------------------------------------------------- */
 
+void display2(
+    int numberOfProcess,
+    int processData[NUM_PROCESSDATATYPE][numberOfProcess],
+    int contextSwitches)
+{
+
+    int max(int size, int array[size]);
+
+    double averageTurnaroundTime = 0;
+    double averageWaitingTime = 0;
+    double averageRespondTime = 0;
+    double cpuUsage = 0;
+
+    // add all together
+    for (int i = 0; i < numberOfProcess; i++)
+    {
+        averageTurnaroundTime += processData[turnaroundTime][i];
+        averageWaitingTime += processData[waitingTime][i];
+        averageRespondTime += processData[respondTime][i];
+        cpuUsage += processData[burstTime][i];
+    }
+
+    averageWaitingTime = (double)averageWaitingTime / numberOfProcess;
+    averageTurnaroundTime = (double)averageTurnaroundTime / numberOfProcess;
+    averageRespondTime = (double)averageRespondTime / numberOfProcess;
+    cpuUsage = (double)cpuUsage / max(numberOfProcess, processData[completionTime]) * 100;
+
+    printf("\nProcess ID\tArrival Time\t Burst Time\t Turnaround Time\t Waiting Time\t Respond Time\t Completion Time");
+
+    for (int i = 0; i < numberOfProcess; i++)
+    {
+        printf("\nProcess[%d]\t%d\t\t %d\t\t %d\t\t\t %d\t\t %d\t\t %d",
+               processData[processID][i],
+               processData[arrivalTime][i],
+               processData[burstTime][i],
+               processData[turnaroundTime][i],
+               processData[waitingTime][i],
+               processData[respondTime][i],
+               processData[completionTime][i]);
+    }
+
+    printf("\n\nAverage Turnaround Time:\t%.2f", averageTurnaroundTime);
+    printf("\nAverage Waiting Time:\t\t%.2f", averageWaitingTime);
+    printf("\nAverage Respond Time:\t\t%.2f", averageRespondTime);
+    printf("\n\nContext Switches:\t\t%d", contextSwitches);
+    printf("\nCPU Utilization:\t\t%.2f %%\n\n", cpuUsage);
+}
+
+
+
 void display(
     int numberOfProcess,
     int processData[NUM_PROCESSDATATYPE][numberOfProcess],
@@ -354,7 +366,7 @@ void display(
 
     for (int k = 0; k < numberOfProcess; k++)
     {
-        printf("\nP[%d]\t\t%d\t\t%d\t\t%d\t\t%d", processData[processID][k], processData[startTime][k], processData[burstTime][k], processData[waitingTime][k], processData[turnaroundTime][k]);
+        printf("\nP[%d]\t\t%d\t\t%d\t\t%d\t\t%d", processData[processID][k], processData[respondTime][k], processData[burstTime][k], processData[waitingTime][k], processData[turnaroundTime][k]);
     }
 
     printf("\n\nAverage Waiting Time: %.2f \n", averageWaitingTime);
@@ -366,31 +378,17 @@ void display(
 /*                               helper function                              */
 /* -------------------------------------------------------------------------- */
 
-// find index using value
-int find(int array[], int value, int end)
-{
-    for (int i = 0; i < end; i++)
-    {
-        if (array[i] == value)
-        {
-            return i;
-        }
-    }
-    return -1;
-}
+int max(int size, int array[size]){
+    int maxNum = array[0];
 
-// remove element using index and do array shifting
-void removeArrayElement(int array[], int index, int *end)
-{
-    for (int i = index; i < *end - 1; i++)
+    for (int i = 1; i < size; i++)
     {
-        if ((i + 1) != *end)
+        if (array[i] > maxNum)
         {
-            array[i] = array[i + 1];
+            maxNum = array[i];
         }
     }
-    array[*end - 1] = 0;
-    *end -= 1;
+    return maxNum;
 }
 
 // check if value is in an array (contain : return false; not contain : return true)
