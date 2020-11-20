@@ -18,7 +18,7 @@
 /* ---------------------------------- macro --------------------------------- */
 
 #define CPU_CAPABILITY 50
-#define EMPTY -1
+#define EMPTY -1 // number that is not in the bound of array
 
 /* ----------------------------- data structure ----------------------------- */
 
@@ -36,7 +36,7 @@ typedef enum
 /* -------------------------------- prototype ------------------------------- */
 
 void rr(int numberOfProcess, int processData[NUM_PROCESSDATATYPE][numberOfProcess],
-        int timeQuantum, int overHead, double *averageWaitingTime, double *averageTurnaroundTime);
+        int timeQuantum, int ContextSwitchingTime, double *averageWaitingTime, double *averageTurnaroundTime);
 
 void fcfs(int numberOfProcess, int processData[NUM_PROCESSDATATYPE][numberOfProcess],
           double *averageWaitingTime, double *averageTurnaroundTime);
@@ -55,7 +55,7 @@ int main()
 {
     // input variable
     int timeQuantum;
-    int overHead;
+    int ContextSwitchingTime;
     int numberOfProcess, j;
     double averageWaitingTime = 0;
     double averageTurnaroundTime = 0;
@@ -79,18 +79,18 @@ int main()
     printf("\nEnter Time Quantum:\t");
     scanf("%d", &timeQuantum);
 
-    printf("\nEnter overhead:\t");
-    scanf("%d", &overHead);
+    printf("\nEnter context switching time:\t");
+    scanf("%d", &ContextSwitchingTime);
 
     printf("\nProcess ID\t\tBurst Time\t Turnaround Time\t Waiting Time\n");
 
     // fcfs algorithms
     // fcfs(numberOfProcess, processData, &averageWaitingTime, &averageTurnaroundTime);
-    sjf(numberOfProcess, processData, &averageWaitingTime, &averageTurnaroundTime);
-    // rr(numberOfProcess, processData, timeQuantum, overHead, &averageWaitingTime, &averageTurnaroundTime);
+    // sjf(numberOfProcess, processData, &averageWaitingTime, &averageTurnaroundTime);
+    rr(numberOfProcess, processData, timeQuantum, ContextSwitchingTime, &averageWaitingTime, &averageTurnaroundTime);
 
     // display function
-    display(numberOfProcess, processData, averageWaitingTime, averageTurnaroundTime);
+    // display(numberOfProcess, processData, averageWaitingTime, averageTurnaroundTime);
 
     return 0;
 }
@@ -107,7 +107,7 @@ void rr(
     int numberOfProcess,
     int processData[NUM_PROCESSDATATYPE][numberOfProcess],
     int timeQuantum,
-    int overHead,
+    int ContextSwitchingTime,
     double *averageWaitingTime,
     double *averageTurnaroundTime)
 {
@@ -126,11 +126,16 @@ void rr(
     //loop related
     int currentTimeFrame = 0;             // current time
     int previousTimeFrame = -timeQuantum; // previous current time
+
+    int workingProcessIndex = EMPTY; // current working process index
+    int previousWorkingIndex = 1;
+
+    int arrivedProcessesCounter = 0;       // index of (int arrivedProcesses[numberOfProcess];) variable
+    int arrivedProcesses[numberOfProcess]; // add or remove the index of process to list if arrive or done
+    int arrivedProcessIndex = 0;
+
     int remainingProcesses = numberOfProcess;
-    int workingProcessIndex = -1;               // current working process index
-    int arrivedProcessesCounter = 0;            // index of (int arrivedProcessesIndex[numberOfProcess];) variable
-    int arrivedProcessesIndex[numberOfProcess]; // add or remove the index of process to list if arrive or done
-    int reducingBurstTime[numberOfProcess];     // gradually reduce burst time to 0 and set it as done
+    int reducingBurstTime[numberOfProcess]; // gradually reduce burst time to 0 and set it as done
     int doneProcessBoolean = 0;
 
     // queue realated variable
@@ -166,7 +171,7 @@ void rr(
         {
             if (processData[arrivalTime][i] > previousTimeFrame && processData[arrivalTime][i] <= currentTimeFrame)
             {
-                arrivedProcessesIndex[arrivedProcessesCounter++] = i;
+                arrivedProcesses[arrivedProcessesCounter++] = i;
                 enque(numberOfProcess, readyQueue, front, &rear, &fill, i);
 
                 // add initial time difference between current and arrival time
@@ -186,14 +191,23 @@ void rr(
 
         previousTimeFrame = currentTimeFrame;
 
-        // if no process in ready queue
+        // if no process in ready queue skip to the next time frame
         if (fill == 0)
         {
             currentTimeFrame++;
             continue;
         }
 
+        // add context switching time
+        if (workingProcessIndex != EMPTY)
+        {
+            previousWorkingIndex = workingProcessIndex;
+        }
         workingProcessIndex = deque(numberOfProcess, readyQueue, &front, rear, &fill);
+        if (previousWorkingIndex != workingProcessIndex && workingProcessIndex != 0)
+        {
+            currentTimeFrame += ContextSwitchingTime;
+        }
 
         // if burst time smaller than time quantum
         if (reducingBurstTime[workingProcessIndex] <= timeQuantum)
@@ -213,23 +227,32 @@ void rr(
             reducingBurstTime[workingProcessIndex] -= timeQuantum;
         }
 
+        // find index of working process in arrivedProcesses using working process index
+        // arrivedProcesses is a container similar to RAM, currently running process will be stored in it
+        arrivedProcessIndex = find(arrivedProcesses, workingProcessIndex, arrivedProcessesCounter);
+
         // add turnaround time to all arrived job
         for (int i = 0; i < arrivedProcessesCounter; i++)
         {
-            processData[turnaroundTime][arrivedProcessesIndex[i]] += currentTimeFrame - previousTimeFrame;
+            processData[turnaroundTime][arrivedProcesses[i]] += currentTimeFrame - previousTimeFrame;
         }
-        // add waiting time to all already arrived but not working jobs
+        // add context switching time as waiting time for arrived working process
+        if (workingProcessIndex != 0)
+        {
+            processData[waitingTime][arrivedProcesses[arrivedProcessIndex]] += ContextSwitchingTime;
+        }
+        // add waiting time and context switching time to all arrived and waiting processes
         for (int i = 0; i < arrivedProcessesCounter; i++)
         {
-            if (i != find(arrivedProcessesIndex, workingProcessIndex, arrivedProcessesCounter))
+            if (i != arrivedProcessIndex)
             {
-                processData[waitingTime][arrivedProcessesIndex[i]] += currentTimeFrame - previousTimeFrame;
+                processData[waitingTime][arrivedProcesses[i]] += currentTimeFrame - previousTimeFrame;
             }
         }
 
         if (doneProcessBoolean)
         {
-            removeArrayElement(arrivedProcessesIndex, find(arrivedProcessesIndex, workingProcessIndex, arrivedProcessesCounter), &arrivedProcessesCounter);
+            removeArrayElement(arrivedProcesses, arrivedProcessIndex, &arrivedProcessesCounter);
             // output value
             printf("\nProcess[%d]\t\t%d\t\t %d\t\t\t %d",
                    processData[processID][workingProcessIndex],
@@ -321,9 +344,9 @@ void fcfs(
 /* -------------------------------------------------------------------------- */
 
 void display(
-    int numberOfProcess, 
+    int numberOfProcess,
     int processData[NUM_PROCESSDATATYPE][numberOfProcess],
-    double averageWaitingTime, 
+    double averageWaitingTime,
     double averageTurnaroundTime)
 {
 
