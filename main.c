@@ -20,6 +20,7 @@
 
 #define CPU_CAPABILITY 50
 #define EMPTY -1 // number that is not in the bound of array
+#define OUTPUT_STRING_SIZE 12
 
 /* ----------------------------- data structure ----------------------------- */
 
@@ -61,7 +62,7 @@ void sjf(int numberOfProcess, int processData[NUM_PROCESSDATATYPE][numberOfProce
 void display(int numberOfProcess, int processData[NUM_PROCESSDATATYPE][numberOfProcess], int contextSwitches);
 void reset(int size, int array[NUM_PROCESSDATATYPE][size]);
 void calculateAverage(int numberOfProcess, int processData[NUM_PROCESSDATATYPE][numberOfProcess], double result[NUM_RESULTTYPE]);
-char* returnBestAlgorithms(double fcfsResult[NUM_RESULTTYPE], double sjfResult[NUM_RESULTTYPE], double rrResult[NUM_RESULTTYPE]);
+void returnBestAlgorithms(double fcfsResult[NUM_RESULTTYPE], double sjfResult[NUM_RESULTTYPE], double rrResult[NUM_RESULTTYPE], char msg[OUTPUT_STRING_SIZE]);
 
 /* -------------------------------------------------------------------------- */
 /*                                main function                               */
@@ -77,6 +78,7 @@ int main()
     double fcfsResult[NUM_RESULTTYPE];
     double sjfResult[NUM_RESULTTYPE];
     double rrResult[NUM_RESULTTYPE];
+    char msg[OUTPUT_STRING_SIZE] = "";
 
     while (1)
     {
@@ -145,11 +147,14 @@ int main()
         display(numberOfProcess, rrProcessData, contextSwitches);
         contextSwitches = 0;
 
+        
+        
         calculateAverage(numberOfProcess, fcfsProcessData, fcfsResult);
         calculateAverage(numberOfProcess, sjfProcessData, sjfResult);
         calculateAverage(numberOfProcess, rrProcessData, rrResult);
 
-        printf("\nThe Best Scheduling Algorithms for this workload is(are) : %s\n", returnBestAlgorithms(fcfsResult, sjfResult, rrResult));
+        returnBestAlgorithms(fcfsResult, sjfResult, rrResult, msg);
+        printf("\nThe Best Scheduling Algorithms for this workload is(are) : %s\n", msg);
     }
     return 0;
 }
@@ -592,9 +597,10 @@ void calculateAverage(int numberOfProcess, int processData[NUM_PROCESSDATATYPE][
     result[att] = (double)averageTurnaroundTime / numberOfProcess;
     result[art] = (double)averageRespondTime / numberOfProcess;
     result[cu] = (double)cpuUsage / maxInt(numberOfProcess, processData[completionTime]) * 100;
+
 }
 
-char* returnBestAlgorithms(double fcfsResult[NUM_RESULTTYPE], double sjfResult[NUM_RESULTTYPE], double rrResult[NUM_RESULTTYPE])
+void returnBestAlgorithms(double fcfsResult[NUM_RESULTTYPE], double sjfResult[NUM_RESULTTYPE], double rrResult[NUM_RESULTTYPE], char msg[OUTPUT_STRING_SIZE])
 {
     void addScore(double temp[NUM_ALGORITHMSTYPE], double fcfsResult[NUM_ALGORITHMSTYPE], double sjfResult[NUM_RESULTTYPE], double rrResult[NUM_RESULTTYPE], double value);
     double max(int size, double array[size]);
@@ -602,8 +608,6 @@ char* returnBestAlgorithms(double fcfsResult[NUM_RESULTTYPE], double sjfResult[N
 
     double temp[NUM_ALGORITHMSTYPE];
     double value;
-    int outputBoolean[NUM_ALGORITHMSTYPE];
-    char* msg = "";
 
     for (int i = 0; i < NUM_RESULTTYPE; i++)
     {
@@ -639,11 +643,45 @@ char* returnBestAlgorithms(double fcfsResult[NUM_RESULTTYPE], double sjfResult[N
         }
     }
 
+    printf("\n\n - SCOREBOARD -\n\n");
+    printf("\tatt\tawt\tart\tcu\tscore\n");
+    for (int j = 0; j < NUM_ALGORITHMSTYPE; j++)
+    {
+        switch (j)
+        {
+        case firstComeFirstServe:
+            printf("\nFCFS\t");
+            break;
+        case shortestJobFirst:
+            printf("\nSJF\t");
+            break;
+        case roundRobin:
+            printf("\nRR\t");
+            break;
+        }
+        for(int i = 0; i < NUM_RESULTTYPE; i++){
+            switch (j)
+            {
+            case firstComeFirstServe:
+                printf("%.2f\t", fcfsResult[i]);
+                break;
+            case shortestJobFirst:
+                printf("%.2f\t", sjfResult[i]);
+                break;
+            case roundRobin:
+                printf("%.2f\t", rrResult[i]);
+                break;
+            }
+        }
+        printf("\n");
+    }
+
+    msg[0] = '\0';
+
     for (int i = 0; i < NUM_ALGORITHMSTYPE; i++)
     {
         if (value == temp[i])
         {
-            outputBoolean[i] = 1;
             switch (i)
             {
             case firstComeFirstServe:
@@ -657,9 +695,8 @@ char* returnBestAlgorithms(double fcfsResult[NUM_RESULTTYPE], double sjfResult[N
                 break;
             }
         }
+        
     } 
-
-    return msg;
 }
 
 void addScore(double temp[NUM_ALGORITHMSTYPE], double fcfsResult[NUM_ALGORITHMSTYPE], double sjfResult[NUM_RESULTTYPE], double rrResult[NUM_RESULTTYPE], double value)
