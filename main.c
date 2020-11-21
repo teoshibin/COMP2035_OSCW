@@ -348,8 +348,6 @@ void fcfs(
 {
     void selectiveSortProcess(int numberOfProcess, int processData[NUM_PROCESSDATATYPE][numberOfProcess], processDataType type);
 
-    //TODO completionTime = arrival time + turn time, arrivalTime
-
     selectiveSortProcess(numberOfProcess, processData, arrivalTime);
 
     processData[respondTime][0] = processData[arrivalTime][0];
