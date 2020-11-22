@@ -454,8 +454,10 @@ void returnBestAlgorithms(double fcfsResult[NUM_RESULTTYPE], double sjfResult[NU
         }
     }
 
-    printf("\n\n\t\t\t\t\t\t\t ----- SCOREBOARD -----\n\n");
-    printf("\tAverageTurnaroundTime\tAverageWaitingTime\tAverageRespondTime\tCompletionTime\t\tCpuUsage\t\tScore\n");
+    printf("\n\n\t\t ----- SCOREBOARD -----\n\n");
+    printf("ATT = Average Turnaround Time, AWT = Average Waiting Time\n");
+    printf("ART = Average Respond Time, CT = Completion Time, CU = CPU Usage\n\n");
+    printf("\tATT\tAWT\tART\tCT\tCU\tScore\n");
     for (int j = 0; j < NUM_ALGORITHMSTYPE; j++)
     {
         switch (j)
@@ -475,13 +477,13 @@ void returnBestAlgorithms(double fcfsResult[NUM_RESULTTYPE], double sjfResult[NU
             switch (j)
             {
             case firstComeFirstServe:
-                printf("%.2f\t\t\t", fcfsResult[i]);
+                printf("%.2f\t", fcfsResult[i]);
                 break;
             case shortestJobFirst:
-                printf("%.2f\t\t\t", sjfResult[i]);
+                printf("%.2f\t", sjfResult[i]);
                 break;
             case roundRobin:
-                printf("%.2f\t\t\t", rrResult[i]);
+                printf("%.2f\t", rrResult[i]);
                 break;
             }
         }
@@ -544,11 +546,11 @@ void display(
     cpuUsage = (double)cpuUsage / finalCompletionTime * 100;
 
     //TODO printf("Algorithms: %s", )
-    printf("\nProcess ID\tArrival Time\t Burst Time\t Turnaround Time\t Waiting Time\t Respond Time\t Completion Time");
+    printf("\nProcess ID\tArrival\t  Burst\t  Turnaround    Waiting    Respond    Completion");
 
     for (int i = 0; i < numberOfProcess; i++)
     {
-        printf("\nProcess[%d]\t%d\t\t %d\t\t %d\t\t\t %d\t\t %d\t\t %d",
+        printf("\nProcess[%d]\t%d\t  %d\t  %d\t\t%d\t   %d\t      %d",
                processData[processID][i],
                processData[arrivalTime][i],
                processData[burstTime][i],
