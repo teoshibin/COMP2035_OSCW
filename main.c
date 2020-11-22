@@ -377,6 +377,140 @@ void fcfs(
 }
 
 /* -------------------------------------------------------------------------- */
+/*                              calculate result                              */
+/* -------------------------------------------------------------------------- */
+
+void calculateAverage(int numberOfProcess, int processData[NUM_PROCESSDATATYPE][numberOfProcess], double result[NUM_RESULTTYPE])
+{
+    int maxInt(int size, int array[size]);
+
+    double averageTurnaroundTime = 0;
+    double averageWaitingTime = 0;
+    double averageRespondTime = 0;
+    double cpuUsage = 0;
+    int finalCompletionTime = 0;
+
+    // add all together
+    for (int i = 0; i < numberOfProcess; i++)
+    {
+        averageTurnaroundTime += processData[turnaroundTime][i];
+        averageWaitingTime += processData[waitingTime][i];
+        averageRespondTime += processData[respondTime][i];
+        cpuUsage += processData[burstTime][i];
+    }
+    finalCompletionTime = maxInt(numberOfProcess, processData[completionTime]);
+
+    result[awt] = (double)averageWaitingTime / numberOfProcess;
+    result[att] = (double)averageTurnaroundTime / numberOfProcess;
+    result[art] = (double)averageRespondTime / numberOfProcess;
+    result[cu] = (double)cpuUsage / finalCompletionTime * 100;
+    result[fct] = (double)finalCompletionTime;
+}
+
+/* -------------------------------------------------------------------------- */
+/*                               compare result                               */
+/* -------------------------------------------------------------------------- */
+
+void returnBestAlgorithms(double fcfsResult[NUM_RESULTTYPE], double sjfResult[NUM_RESULTTYPE], double rrResult[NUM_RESULTTYPE], char msg[OUTPUT_STRING_SIZE])
+{
+    void addScore(double temp[NUM_ALGORITHMSTYPE], double fcfsResult[NUM_ALGORITHMSTYPE], double sjfResult[NUM_RESULTTYPE], double rrResult[NUM_RESULTTYPE], double value);
+    double max(int size, double array[size]);
+    double min(int size, double array[size]);
+
+    double temp[NUM_ALGORITHMSTYPE];
+    double value;
+
+    for (int i = 0; i < NUM_RESULTTYPE; i++)
+    {
+        for (int k = 0; k < NUM_ALGORITHMSTYPE; k++)
+        {
+            switch (k)
+            {
+            case firstComeFirstServe:
+                temp[k] = fcfsResult[i];
+                break;
+            case shortestJobFirst:
+                temp[k] = sjfResult[i];
+                break;
+            case roundRobin:
+                temp[k] = rrResult[i];
+                break;
+            }
+        }
+
+        switch (i)
+        {
+        case cu:
+            value = max(NUM_ALGORITHMSTYPE, temp);
+            addScore(temp, fcfsResult, sjfResult, rrResult, value);
+            break;
+        case score:
+            value = max(NUM_ALGORITHMSTYPE, temp);
+            break;
+        default:
+            value = min(NUM_ALGORITHMSTYPE, temp);
+            addScore(temp, fcfsResult, sjfResult, rrResult, value);
+            break;
+        }
+    }
+
+    printf("\n\n\t\t\t\t\t\t\t ----- SCOREBOARD -----\n\n");
+    printf("\tAverageTurnaroundTime\tAverageWaitingTime\tAverageRespondTime\tCompletionTime\t\tCpuUsage\t\tScore\n");
+    for (int j = 0; j < NUM_ALGORITHMSTYPE; j++)
+    {
+        switch (j)
+        {
+        case firstComeFirstServe:
+            printf("\nFCFS\t");
+            break;
+        case shortestJobFirst:
+            printf("\nSJF\t");
+            break;
+        case roundRobin:
+            printf("\nRR\t");
+            break;
+        }
+        for (int i = 0; i < NUM_RESULTTYPE; i++)
+        {
+            switch (j)
+            {
+            case firstComeFirstServe:
+                printf("%.2f\t\t\t", fcfsResult[i]);
+                break;
+            case shortestJobFirst:
+                printf("%.2f\t\t\t", sjfResult[i]);
+                break;
+            case roundRobin:
+                printf("%.2f\t\t\t", rrResult[i]);
+                break;
+            }
+        }
+        printf("\n");
+    }
+
+    msg[0] = '\0';
+
+    for (int i = 0; i < NUM_ALGORITHMSTYPE; i++)
+    {
+        if (value == temp[i])
+        {
+            switch (i)
+            {
+            case firstComeFirstServe:
+                strcat(msg, " FCFS");
+                break;
+            case shortestJobFirst:
+                strcat(msg, " SJF");
+                break;
+            case roundRobin:
+                strcat(msg, " RR");
+                break;
+            }
+        }
+    }
+}
+
+/* -------------------------------------------------------------------------- */
 /*                              display function                              */
 /* -------------------------------------------------------------------------- */
 
@@ -432,6 +566,10 @@ void display(
     printf("\nCPU Utilization:\t\t%.2f %%\n\n", cpuUsage);
 }
 
+/* -------------------------------------------------------------------------- */
+/*                               reset 2d array                               */
+/* -------------------------------------------------------------------------- */
+
 void reset(int row, int col, int array[row][col])
 {
     for (int i = 0; i < row; i++)
@@ -443,6 +581,10 @@ void reset(int row, int col, int array[row][col])
     }
 }
 
+/* -------------------------------------------------------------------------- */
+/*                             reset result array                             */
+/* -------------------------------------------------------------------------- */
+
 void resetResult(int size, double array[size])
 {
     for (int i = 0; i < size; i++)
@@ -452,7 +594,7 @@ void resetResult(int size, double array[size])
 }
 
 /* -------------------------------------------------------------------------- */
-/*                               helper function                              */
+/*                               helper functions                             */
 /* -------------------------------------------------------------------------- */
 
 int maxInt(int size, int array[size])
@@ -597,132 +739,6 @@ void shiftProcessData(int numberOfProcess, int processData[NUM_PROCESSDATATYPE][
         for (int j = 0; j < NUM_PROCESSDATATYPE; j++)
         {
             processData[j][i] = processData[j][i - 1];
-        }
-    }
-}
-
-void calculateAverage(int numberOfProcess, int processData[NUM_PROCESSDATATYPE][numberOfProcess], double result[NUM_RESULTTYPE])
-{
-    int maxInt(int size, int array[size]);
-
-    double averageTurnaroundTime = 0;
-    double averageWaitingTime = 0;
-    double averageRespondTime = 0;
-    double cpuUsage = 0;
-    int finalCompletionTime = 0;
-
-    // add all together
-    for (int i = 0; i < numberOfProcess; i++)
-    {
-        averageTurnaroundTime += processData[turnaroundTime][i];
-        averageWaitingTime += processData[waitingTime][i];
-        averageRespondTime += processData[respondTime][i];
-        cpuUsage += processData[burstTime][i];
-    }
-    finalCompletionTime = maxInt(numberOfProcess, processData[completionTime]);
-
-    result[awt] = (double)averageWaitingTime / numberOfProcess;
-    result[att] = (double)averageTurnaroundTime / numberOfProcess;
-    result[art] = (double)averageRespondTime / numberOfProcess;
-    result[cu] = (double)cpuUsage / finalCompletionTime * 100;
-    result[fct] = (double)finalCompletionTime;
-}
-
-void returnBestAlgorithms(double fcfsResult[NUM_RESULTTYPE], double sjfResult[NUM_RESULTTYPE], double rrResult[NUM_RESULTTYPE], char msg[OUTPUT_STRING_SIZE])
-{
-    void addScore(double temp[NUM_ALGORITHMSTYPE], double fcfsResult[NUM_ALGORITHMSTYPE], double sjfResult[NUM_RESULTTYPE], double rrResult[NUM_RESULTTYPE], double value);
-    double max(int size, double array[size]);
-    double min(int size, double array[size]);
-
-    double temp[NUM_ALGORITHMSTYPE];
-    double value;
-
-    for (int i = 0; i < NUM_RESULTTYPE; i++)
-    {
-        for (int k = 0; k < NUM_ALGORITHMSTYPE; k++)
-        {
-            switch (k)
-            {
-            case firstComeFirstServe:
-                temp[k] = fcfsResult[i];
-                break;
-            case shortestJobFirst:
-                temp[k] = sjfResult[i];
-                break;
-            case roundRobin:
-                temp[k] = rrResult[i];
-                break;
-            }
-        }
-
-        switch (i)
-        {
-        case cu:
-            value = max(NUM_ALGORITHMSTYPE, temp);
-            addScore(temp, fcfsResult, sjfResult, rrResult, value);
-            break;
-        case score:
-            value = max(NUM_ALGORITHMSTYPE, temp);
-            break;
-        default:
-            value = min(NUM_ALGORITHMSTYPE, temp);
-            addScore(temp, fcfsResult, sjfResult, rrResult, value);
-            break;
-        }
-    }
-
-    printf("\n\n\t\t\t\t\t\t\t ----- SCOREBOARD -----\n\n");
-    printf("\tAverageTurnaroundTime\tAverageWaitingTime\tAverageRespondTime\tCompletionTime\t\tCpuUsage\t\tScore\n");
-    for (int j = 0; j < NUM_ALGORITHMSTYPE; j++)
-    {
-        switch (j)
-        {
-        case firstComeFirstServe:
-            printf("\nFCFS\t");
-            break;
-        case shortestJobFirst:
-            printf("\nSJF\t");
-            break;
-        case roundRobin:
-            printf("\nRR\t");
-            break;
-        }
-        for (int i = 0; i < NUM_RESULTTYPE; i++)
-        {
-            switch (j)
-            {
-            case firstComeFirstServe:
-                printf("%.2f\t\t\t", fcfsResult[i]);
-                break;
-            case shortestJobFirst:
-                printf("%.2f\t\t\t", sjfResult[i]);
-                break;
-            case roundRobin:
-                printf("%.2f\t\t\t", rrResult[i]);
-                break;
-            }
-        }
-        printf("\n");
-    }
-
-    msg[0] = '\0';
-
-    for (int i = 0; i < NUM_ALGORITHMSTYPE; i++)
-    {
-        if (value == temp[i])
-        {
-            switch (i)
-            {
-            case firstComeFirstServe:
-                strcat(msg, " FCFS");
-                break;
-            case shortestJobFirst:
-                strcat(msg, " SJF");
-                break;
-            case roundRobin:
-                strcat(msg, " RR");
-                break;
-            }
         }
     }
 }
