@@ -350,7 +350,7 @@ void fcfs(
 
     selectiveSortProcess(numberOfProcess, processData, arrivalTime);
 
-    processData[respondTime][0] = processData[arrivalTime][0];
+    processData[respondTime][0] = 0;
     processData[completionTime][0] = processData[burstTime][0] + processData[arrivalTime][0];
 
     for (int i = 1; i < numberOfProcess; i++)
@@ -359,13 +359,14 @@ void fcfs(
         if (processData[completionTime][i - 1] > processData[arrivalTime][i])
         {
             processData[completionTime][i] = processData[completionTime][i - 1] + processData[burstTime][i];
+            processData[respondTime][i] = processData[completionTime][i - 1] - processData[arrivalTime][i] + overheadTime;
         }
         else
         {
             processData[completionTime][i] = processData[arrivalTime][i] + processData[burstTime][i];
+            processData[respondTime][i] = 0;
         }
         processData[completionTime][i] += overheadTime;
-        processData[respondTime][i] = processData[completionTime][i - 1];
         *overheadCount += 1;
     }
 
