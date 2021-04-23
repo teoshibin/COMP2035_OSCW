@@ -1,5 +1,7 @@
 # PROCESS SCHEDULING :rocket:
 
+CPU process scheduling simulation
+
 ## How to run
 launch your cmd and run the code below
 ```
